@@ -14,8 +14,8 @@ library(tidyverse)
 ## Carga de datos
 
 ```{r}
-#probe=read_csv("data/probe.txt")
-aux=read_tsv("data/combined_data_1.txt",col_names=FALSE,n_max =10000)# leo 10^4 lo leo con tabulador para que lea una varable
+#probe=read_csv("Raw data/probe.txt")
+aux=read_tsv("Raw data/combined_data_1.txt",col_names=FALSE,n_max =10000)# leo 10^4 lo leo con tabulador para que lea una varable
 aux=aux%>% mutate(fila=row_number())
 filas=grep(":",aux$X1)
 filas_ID= aux %>% filter( fila %in% filas )
