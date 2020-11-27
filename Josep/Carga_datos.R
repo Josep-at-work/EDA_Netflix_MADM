@@ -42,7 +42,7 @@ combined_data_1=aux %>% mutate(ID1=rep(filas_ID$X1,times=reps)) %>% filter(!(fil
 # Ahora arreglo la variable X1
 
 combined_data_1= combined_data_1 %>% separate(X1,into=c("ID_customer","Score","date"),sep=",")
-rm(aux,filas,filas_ID,IDs,reps)
+# rm(aux,filas,filas_ID,IDs,reps) remove variables
 
 # Visualizo la tabla
 
@@ -50,7 +50,11 @@ rm(aux,filas,filas_ID,IDs,reps)
 
 summary(combined_data_1)
 
+# Las 8 pelis:
 
 df = aux %>% mutate(ID=rep(filas_ID$X1,times=reps)) %>% filter(!(fila %in% filas) )
 df = df %>% separate(X1,into=c("ID_customer","Score","date"),sep=",") #separa por comas y da nombre a las columnas.
+
 summary(df) # Las 10K filas menos 8(numero de IDs de las pelis)
+
+
