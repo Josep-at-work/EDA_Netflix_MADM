@@ -34,7 +34,7 @@ length(reps)
 dim(aux)
 sum(reps)
 combined_data_1=aux %>% mutate(ID1=rep(filas_ID$X1,times=reps)) %>% filter(!(fila %in% filas) ) %>% filter(ID1==ID1[length(IDs)])
-# Que hace el ! en el filter de las filas.
+# Que hace el ! en el filter de las filas?
 # El ultimo filtro hace que solo pille los datos para la peli con ID = 1
 # filtro el último pues no sé si lo he leído entero y las entradas 1:
 
