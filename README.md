@@ -1,6 +1,7 @@
 # proyecto-netflix-movies-madm
 
-[Kaggle](combined_data_1= combined_data_1 %>% separate(X1,into=c("ID_customer","Score","date"),sep=","))
+
+[Kaggle Origen](https://www.kaggle.com/netflix-inc/netflix-prize-data?select=combined_data_4.txt)
 
 - Podeis usar solo R, solo Python o los dos. Se trata que **demostréis que sabéis tanto usar lo aprendido como investigar cosas nuevas.**
 - Debéis incluir un apartado de **descriptiva** que evaluaré yo (20%), y uno de **manejo de datos con tidyverse** que evaluará Ricarddo (20%)
