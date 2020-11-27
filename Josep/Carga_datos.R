@@ -34,7 +34,10 @@ length(reps)
 dim(aux)
 sum(reps)
 combined_data_1=aux %>% mutate(ID1=rep(filas_ID$X1,times=reps)) %>% filter(!(fila %in% filas) ) %>% filter(ID1==ID1[length(IDs)])
+# Que hace el ! en el filter de las filas.
+# El ultimo filtro hace que solo pille los datos para la peli con ID = 1
 # filtro el último pues no sé si lo he leído entero y las entradas 1:
+
 
 # Ahora arreglo la variable X1
 
@@ -47,3 +50,7 @@ rm(aux,filas,filas_ID,IDs,reps)
 
 summary(combined_data_1)
 
+
+df = aux %>% mutate(ID=rep(filas_ID$X1,times=reps)) %>% filter(!(fila %in% filas) )
+df = df %>% separate(X1,into=c("ID_customer","Score","date"),sep=",") #separa por comas y da nombre a las columnas.
+summary(df) # Las 10K filas menos 8(numero de IDs de las pelis)
