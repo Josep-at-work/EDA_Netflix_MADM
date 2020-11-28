@@ -4,17 +4,17 @@ author: "Ricardo"
 date: "20/11/2020"
 output: html_document
 ---
-  
+
 # The first line of each file contains the movie id followed by a
 # colon. Each subsequent line in the file corresponds to a rating from a customer
 # and its date in the following format:
-# CustomerID,Rating,Date  
-# 
+# CustomerID,Rating,Date
+#
 #   -MovieIDs range from 1 to 17770 sequentially.
 #   -CustomerIDs range from 1 to 2649429, with gaps. There are 480189 users.
 #   -Ratings are on a five star (integral) scale from 1 to 5.
-#   -Dates have the format YYYY-MM-DD.  
-#   
+#   -Dates have the format YYYY-MM-DD.
+#
 
 
 library(tidyverse)
@@ -40,16 +40,16 @@ sum(reps)
 # # Que hace el ! en el filter de las filas?
 # # El ultimo filtro hace que solo pille los datos para la peli con ID = 1
 # # filtro el último pues no sé si lo he leído entero y las entradas 1:
-# 
+#
 # # Ahora arreglo la variable X1
-# 
+#
 # # combined_data_1= combined_data_1 %>% separate(X1,into=c("ID_customer","Score","date"),sep=",")
 # # rm(aux,filas,filas_ID,IDs,reps) remove variables
-# 
+#
 # # Visualizo la tabla
-# 
-# # knitr::kable(combined_data_1) 
-# 
+#
+# # knitr::kable(combined_data_1)
+#
 # # summary(combined_data_1)
 
 # Las 8 pelis:
@@ -69,5 +69,3 @@ head(titles)
 tt<-tibble(titles)
 head(tt)
 tt <- rename(tt, ID = X1, Year = X2, Title = X3)
-
-
