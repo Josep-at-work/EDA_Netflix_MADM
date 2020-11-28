@@ -96,3 +96,21 @@ arrange(combined_data_1, Score, date) #primero la ordena según el Score y luego
 arrange(combined_data_1, desc(date)) #ordenar de más novedoso a menos novedoso
 
 ### SELECT
+
+arrange(combined_data_1, Score)
+sorted_date[1,] #Devolver la primera fila, de todas las columnas, ordenado por la fecha
+sorted_date[,1] #Devolver la primera columna, ordenado por la fecha
+
+select(sorted_date[1:100,], ID_customer, Score, ID1, date) #así no selecciono la columna 'fila' pero solo es para las 100 primeras filas
+
+select(combined_data_1,ID_customer:date) #Seleccionar las columnas desde el 'ID_customer' hasta 'date'
+
+select(combined_data_1, -(fila))#todas las columnas menos la columna 'fila'
+
+select(combined_data_1, starts_with('ID')) #me quedo con las columnas que empiezan por 'ID'
+
+select(combined_data_1, ends_with("te")) #me quedo con las columnas que terminan por 'te'.
+
+select(combined_data_1, contains('s')) #me quedo con las columnas que contienen 's'.
+
+select(combined_data_1, matches('(.)\\1')) #expresiones regulares: me busca carácteres repetidos en las columnas.
