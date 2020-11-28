@@ -44,47 +44,30 @@ reps=diff(c(filas_ID$fila,max(aux$fila)+1))
 length(reps)
 dim(aux)
 sum(reps)
-scores = aux %>% mutate(ID1=rep(filas_ID$X1,times=reps)) %>% filter(!(fila %in% filas) )
+combined_data_1 = aux %>% mutate(ID1=rep(filas_ID$X1,times=reps)) %>% filter(!(fila %in% filas) )
 
 #ahora borramos los datos de la última película por si se han cortado a medias
-scores = scores %>% filter( scores$fila < filas_ID$fila[length(filas_ID$fila)-1] )
+combined_data_1 = combined_data_1 %>% filter( combined_data_1$fila < filas_ID$fila[length(filas_ID$fila)-1] )
 
 # Ahora arregloamos la variable X1, y separamos la fecha en año, mes y día
-scores = scores %>% separate(X1,into = c("CustomerID","Score","Date"), sep = ",")
-scores = scores %>% mutate(Date_copy = Date)  %>% separate(Date_copy, into = c("Year", "Month", "Day"), sep = "-")
+combined_data_1 = combined_data_1 %>% separate(X1,into = c("CustomerID","Score","Date"), sep = ",")
+combined_data_1 = combined_data_1 %>% mutate(Date_copy = Date)  %>% separate(Date_copy, into = c("Year", "Month", "Day"), sep = "-")
 
 #Renombramos y reordenamos las variables
-scores <- rename(scores, MovieID = ID1, RowID = fila)
-scores = scores %>% relocate(RowID, MovieID, CustomerID, Date, Year, Month, Day, Score)
+combined_data_1 <- rename(combined_data_1, MovieID = ID1, RowID = fila)
+combined_data_1 = combined_data_1 %>% relocate(RowID, MovieID, CustomerID, Date, Year, Month, Day, Score)
 
 #Quitamos los ":" de el campo MovieID
-scores$MovieID <- scores$MovieID %>% str_replace(":", "")
+combined_data_1$MovieID <- combined_data_1$MovieID %>% str_replace(":", "")
 
 # Cambiamos los tipos de variable necesarios
 
-scores <- scores %>% mutate(across(c(RowID:CustomerID, Year:Score), as.integer))
+combined_data_1 <- combined_data_1 %>% mutate(across(c(RowID:CustomerID, Year:Score), as.integer))
 
 
-summary(scores)
+summary(combined_data_1)
 ```
 
-Info data
-```{r}
-length(unique(scores$CustomerID)) #9619 usuarios distintos
-table(scores$Score) # frecuencia puntuaciones
-table(scores$ID) # frecuencia pelis
-scores<-mutate(scores, fila=NULL) # eliminamos la columna fila
-```
-
-### Cargar csv títulos
-```{r}
-titles = read_csv('Raw data/movie_titles.csv', col_names=F )
-head(titles)
-tt<-tibble(titles)
-tt <- rename(tt, ID = X1, Year = X2, Title = X3)
-head(tt)
-#inner_join()
-```
 
 
 
