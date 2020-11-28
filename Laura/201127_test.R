@@ -134,16 +134,6 @@ renamed_new <- select(renamed,
                       Row)
 mutate
 
-#En esta sección no hay nada interesante para aplicar en nuestro dataset.
-#En el mutate se suelen aplicar:
-# * Operaciones aritméticas: +, -, *, /, ^ (hours + 60* minutes)
-# * Agregados de funciones: x/sum(x) : proporcion sobre el total
-#                           x - mean(x): distancia respecto de media
-#                           (x-mean(x))/sd(x): tipificación
-#                           (x-min(x))/max(x): estandarizar entre [0,1]
-# * Aritmética modular: %/%-> cociente de la división entera, %% -> resto de la división entera
-#                           x == y * (x%/%y) + (x%%y)
-
 attach(renamed_new)
 Score = as.numeric(Score)
 
@@ -162,7 +152,18 @@ renamed_new
 renamed_new = renamed_new%>% separate(Date,into=c("Year","Month","Day"),sep="-")
 renamed_new
 
-renamed_new$month[Score == max(Score)]
-renamed_new$year[Score == max(Score)]
-renamed_new$day[Score == max(Score)]
+renamed_new$Month[Score == max(Score)]
+renamed_new$Year[Score == max(Score)]
+renamed_new$Day[Score == max(Score)]
+
+#En el mutate se suelen aplicar:
+# * Operaciones aritméticas: +, -, *, /, ^ (hours + 60* minutes)
+# * Agregados de funciones: x/sum(x) : proporcion sobre el total
+#                           x - mean(x): distancia respecto de media
+#                           (x-mean(x))/sd(x): tipificación
+#                           (x-min(x))/max(x): estandarizar entre [0,1]
+# * Aritmética modular: %/%-> cociente de la división entera, %% -> resto de la división entera
+#                           x == y * (x%/%y) + (x%%y)
+# * Logaritmos: log() -> logaritmo en base e, log2(), log10()
+# * Offsets: lead(), lag()
 
