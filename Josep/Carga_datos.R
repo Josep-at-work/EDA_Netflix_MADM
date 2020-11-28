@@ -18,7 +18,8 @@ output: html_document
 
 
 library(tidyverse)
-# rm(list)
+library(magrittr)
+rm(scores, title)
 
 ## Carga de datos
 
@@ -34,38 +35,41 @@ length(reps)
 dim(aux)
 sum(reps)
 
+scores = aux %>% mutate(ID1=rep(filas_ID$X1,times=reps)) %>% filter(!(fila %in% filas) )
+
+#ahora borramos los datos de la última película por si se han cortado a medias
+scores = scores %>% filter( scores$fila < filas_ID$fila[length(filas_ID$fila)-1] )
+
+# Ahora arreglamos la variable X1, y separamos la fecha en año, mes y día
+scores = scores %>% separate(X1,into = c("CustomerID","Score","Date"), sep = ",")
+scores = scores %>% mutate(Date_copy = Date)  %>% separate(Date_copy, into = c("Year", "Month", "Day"), sep = "-")
+
+#Renombramos y reordenamos las variables
+scores <- rename(scores, MovieID = ID1, RowID = fila)
+scores = scores %>% relocate(RowID, MovieID, CustomerID, Date, Year, Month, Day, Score)
+
+#Quitamos los ":" de el campo MovieID
+scores$MovieID <- scores$MovieID %>% str_replace(":", "")
+
+# Cambiamos los tipos de variable necesarios
+
+scores <- scores %>% mutate(across(c(RowID:CustomerID, Year:Score), as.integer))
 
 
-# # combined_data_1=aux %>% mutate(ID1=rep(filas_ID$X1,times=reps)) %>% filter(!(fila %in% filas) ) %>% filter(ID1==ID1[length(IDs)])
-# # Que hace el ! en el filter de las filas?
-# # El ultimo filtro hace que solo pille los datos para la peli con ID = 1
-# # filtro el último pues no sé si lo he leído entero y las entradas 1:
-#
-# # Ahora arreglo la variable X1
-#
-# # combined_data_1= combined_data_1 %>% separate(X1,into=c("ID_customer","Score","date"),sep=",")
-# # rm(aux,filas,filas_ID,IDs,reps) remove variables
-#
-# # Visualizo la tabla
-#
-# # knitr::kable(combined_data_1)
-#
-# # summary(combined_data_1)
+summary(scores)
+scores <- select(scores, -RowID) # eliminamos la columna fila
 
-# Las 8 pelis:
+length(unique(scores$CustomerID)) #4834 usuarios distintos
+table(scores$Score) # frecuencia puntuaciones
+table(scores$MovieID) # frecuencia title
 
-df = aux %>% mutate(ID=rep(filas_ID$X1,times=reps)) %>% filter(!(fila %in% filas) )
-df = df %>% separate(X1,into=c("ID_customer","Score","date"),sep=",") #separa por comas y da nombre a las columnas.
-
-summary(df) # Las 10K filas menos 8(numero de IDs de las pelis)
-
-length(unique(df$ID_customer)) #9619 usuarios distintos
-table(df$Score) # frecuencia puntuaciones
-table(df$ID) # frecuencia pelis
-df<-mutate(df, fila=NULL) # eliminamos la columna fila
-
-titles = read_csv('Raw data/movie_titles.csv', col_names=F )
-head(titles)
+rm(titles,tt)
+titles = read_csv('Raw data/movie_titles.csv', col_names=F)
 tt<-tibble(titles)
 head(tt)
-tt <- rename(tt, ID = X1, Year = X2, Title = X3)
+tt <- rename(tt, MovieID = X1, Release_Year = X2, Title = X3)
+summary(tt)
+
+#Left Join
+scores %<>% left_join(tt, by = 'MovieID') 
+head(scores)
