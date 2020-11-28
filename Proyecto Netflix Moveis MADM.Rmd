@@ -1,24 +1,33 @@
 ---
-title: "Netflix movies"
-date: "28/11/2020"
+title: "Proyecto Netflix Movies MADM"
+author: "Laura Montes, Josep Roman, Paul Ramírez"
+date: "11/28/2020"
+output: html_document
 ---
-  
-  # The first line of each file contains the movie id followed by a
-  # colon. Each subsequent line in the file corresponds to a rating from a customer
-  # and its date in the following format:
-  # CustomerID,Rating,Date  
-  # 
-  #   -MovieIDs range from 1 to 17770 sequentially.
-  #   -CustomerIDs range from 1 to 2649429, with gaps. There are 480189 users.
-  #   -Ratings are on a five star (integral) scale from 1 to 5.
-  #   -Dates have the format YYYY-MM-DD.  
-  
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Data Wrangle
 
+## Importación de datos
+
+#### Info de los archivos "combined_data_.txt"
+The first line of each file contains the movie id followed by a colon. Each subsequent line in the file corresponds to a rating from a customer and its date in the following format:
+
+  CustomerID,Rating,Date  
+  
+  * MovieIDs range from 1 to 17770 sequentially.
+  * CustomerIDs range from 1 to 2649429, with gaps. There are 480189 users.
+  * Ratings are on a five star (integral) scale from 1 to 5.
+  * Dates have the format YYYY-MM-DD.  
+  
+```{r, include=FALSE}
 library(tidyverse)
+```
 
 
-## Carga de datos
+```{r}
 
 aux=read_tsv("Raw data/combined_data_1.txt", col_names = FALSE, n_max = 30000) #lectura de las primeras 10^4 filas
 aux=aux%>% mutate(fila=row_number()) #añadir columna con número de fila
@@ -56,17 +65,10 @@ combined_data_1 <- combined_data_1 %>% mutate(across(c(RowID:CustomerID, Year:Sc
 
 
 summary(combined_data_1)
+```
 
 
 
-#rm(aux,filas,filas_ID,IDs,reps)
-
-# Visualizo la tabla
-
-# knitr::kable(combined_data_1) 
 
 
 
-df = aux %>% mutate(ID=rep(filas_ID$X1,times=reps)) %>% filter(!(fila %in% filas) )
-df = df %>% separate(X1,into=c("ID_customer","Score","date"),sep=",") #separa por comas y da nombre a las columnas.
-summary(df) # Las 10K filas menos 8(numero de IDs de las pelis)
