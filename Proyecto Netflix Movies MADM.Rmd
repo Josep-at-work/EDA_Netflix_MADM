@@ -30,6 +30,12 @@ library(tidyverse)
 ```{r}
 
 aux=read_tsv("Raw data/combined_data_1.txt", col_names = FALSE, n_max = 30000) #lectura de las primeras 10^4 filas
+
+```
+
+## Orden de los datos
+
+```{r}
 aux=aux%>% mutate(fila=row_number()) #añadir columna con número de fila
 filas=grep(":",aux$X1) #buscar filas con ":", filas comienzo nueva pelicula
 filas_ID= aux %>% filter( fila %in% filas ) 
@@ -43,12 +49,7 @@ combined_data_1 = aux %>% mutate(ID1=rep(filas_ID$X1,times=reps)) %>% filter(!(f
 #ahora borramos los datos de la última película por si se han cortado a medias
 combined_data_1 = combined_data_1 %>% filter( combined_data_1$fila < filas_ID$fila[length(filas_ID$fila)-1] )
 
-#combined_data_1 = combined_data_1 %>% filter(ID1==ID1[length(IDs)])
-
-# El ultimo filtro hace que solo pille los datos para la peli con ID = 1
-# filtro el último pues no sé si lo he leído entero y las entradas 1:
-
-# Ahora arreglo la variable X1, y separamos la fecha en año, mes y día
+# Ahora arregloamos la variable X1, y separamos la fecha en año, mes y día
 combined_data_1 = combined_data_1 %>% separate(X1,into = c("CustomerID","Score","Date"), sep = ",")
 combined_data_1 = combined_data_1 %>% mutate(Date_copy = Date)  %>% separate(Date_copy, into = c("Year", "Month", "Day"), sep = "-")
 
