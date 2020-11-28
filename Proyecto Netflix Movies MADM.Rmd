@@ -24,68 +24,74 @@ The first line of each file contains the movie id followed by a colon. Each subs
   
 ```{r, include=FALSE}
 library(tidyverse)
+library(magrittr) #permite hacer pipes en ambos sentidos
+
+rm(aux, scores, titles, tt) #se eliminan las tablas por si las tenemos ya en el environment
 ```
 
 
 ```{r}
-
-aux=read_tsv("Raw data/combined_data_1.txt", col_names = FALSE, n_max = 30000) #lectura de las primeras 10^4 filas
-
+aux = read_tsv("Raw data/combined_data_1.txt", col_names = FALSE, n_max = 30000) #lectura de las primeras
 ```
 
 ## Orden de los datos
 
 ```{r}
-aux=aux%>% mutate(fila=row_number()) #añadir columna con número de fila
-filas=grep(":",aux$X1) #buscar filas con ":", filas comienzo nueva pelicula
-filas_ID= aux %>% filter( fila %in% filas ) 
-IDs=unique(filas_ID$X1)
-reps=diff(c(filas_ID$fila,max(aux$fila)+1))
+aux %<>% mutate(fila=row_number()) #añadir columna con número de fila
+filas = grep(":",aux$X1) #buscar filas con ":", filas comienzo nueva pelicula
+filas_ID = aux %>% filter( fila %in% filas ) 
+IDs = unique(filas_ID$X1)
+reps = diff(c(filas_ID$fila,max(aux$fila)+1))
 length(reps)
 dim(aux)
 sum(reps)
 scores = aux %>% mutate(ID1=rep(filas_ID$X1,times=reps)) %>% filter(!(fila %in% filas) )
 
 #ahora borramos los datos de la última película por si se han cortado a medias
-scores = scores %>% filter( scores$fila < filas_ID$fila[length(filas_ID$fila)-1] )
+scores %<>% filter( scores$fila < filas_ID$fila[length(filas_ID$fila)-1] )
 
 # Ahora arregloamos la variable X1, y separamos la fecha en año, mes y día
-scores = scores %>% separate(X1,into = c("CustomerID","Score","Date"), sep = ",")
-scores = scores %>% mutate(Date_copy = Date)  %>% separate(Date_copy, into = c("Year", "Month", "Day"), sep = "-")
+scores %<>% separate(X1,into = c("CustomerID","Score","Date"), sep = ",")
+scores %<>% mutate(Date_copy = Date)  %>% separate(Date_copy, into = c("Year", "Month", "Day"), sep = "-")
 
 #Renombramos y reordenamos las variables
-scores <- rename(scores, MovieID = ID1, RowID = fila)
-scores = scores %>% relocate(RowID, MovieID, CustomerID, Date, Year, Month, Day, Score)
+scores %<>% rename(MovieID = ID1, RowID = fila)
+scores %<>% relocate(RowID, MovieID, CustomerID, Date, Year, Month, Day, Score)
 
 #Quitamos los ":" de el campo MovieID
 scores$MovieID <- scores$MovieID %>% str_replace(":", "")
 
 # Cambiamos los tipos de variable necesarios
 
-scores <- scores %>% mutate(across(c(RowID:CustomerID, Year:Score), as.integer))
+scores %<>% mutate(across(c(RowID:CustomerID, Year:Score), as.integer))
 
-
+scores <- select(scores, -RowID) # eliminamos la columna fila
 summary(scores)
 ```
+Vemos que tenemos infor de la peli 1 a la 15, y las puntuaciones se hicieron entre el 200 y el 2005(mayoritariamente en 2005). Distribución de los meses y dias en que se puntuo es uniforme. 
 
-Info data
+Veamos más informacion sobre los datos:
 ```{r}
-length(unique(scores$CustomerID)) #9619 usuarios distintos
+length(unique(scores$CustomerID)) #20537 usuarios distintos
 table(scores$Score) # frecuencia puntuaciones
-table(scores$ID) # frecuencia pelis
-scores<-mutate(scores, fila=NULL) # eliminamos la columna fila
+table(scores$MovieID) # frecuencia title
 ```
 
-### Cargar csv títulos
+### Cargar títulos
+
+Cargamos el csv de los títulos y hacemos un left join para añadir a la tabla 'scores' los títulos de cada película y el año en que se publicaron
 ```{r}
-titles = read_csv('Raw data/movie_titles.csv', col_names=F )
-head(titles)
-tt<-tibble(titles)
-tt <- rename(tt, ID = X1, Year = X2, Title = X3)
+rm(titles,tt)
+titles = read_csv('Raw data/movie_titles.csv', col_names=F)
+tt <- tibble(titles)
 head(tt)
-#inner_join()
-```
+tt <- rename(tt, MovieID = X1, Release_Year = X2, Title = X3)
 
+#Left Join
+scores %<>% left_join(tt, by = 'MovieID') 
+summary(scores); head(scores)
+```
+Se tiene que hacer un left join porque lo que queremos es que la tabla base siga siendo la de scores, y así cuando coincida el MovieID de scores con el de titles, que nos añada la info para esa MovieID que la table de titulos tiene. 
 
 
 
