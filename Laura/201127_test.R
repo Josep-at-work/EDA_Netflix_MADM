@@ -96,3 +96,73 @@ arrange(combined_data_1, Score, date) #primero la ordena según el Score y luego
 arrange(combined_data_1, desc(date)) #ordenar de más novedoso a menos novedoso
 
 ### SELECT
+
+arrange(combined_data_1, Score)
+sorted_date[1,] #Devolver la primera fila, de todas las columnas, ordenado por la fecha
+sorted_date[,1] #Devolver la primera columna, ordenado por la fecha
+
+select(sorted_date[1:100,], ID_customer, Score, ID1, date) #así no selecciono la columna 'fila' pero solo es para las 100 primeras filas
+
+select(combined_data_1,ID_customer:date) #Seleccionar las columnas desde el 'ID_customer' hasta 'date'
+
+select(combined_data_1, -(fila))#todas las columnas menos la columna 'fila'
+
+select(combined_data_1, starts_with('ID')) #me quedo con las columnas que empiezan por 'ID'
+
+select(combined_data_1, ends_with("te")) #me quedo con las columnas que terminan por 'te'.
+
+select(combined_data_1, contains('s')) #me quedo con las columnas que contienen 's'.
+
+select(combined_data_1, matches('(.)\\1')) #expresiones regulares: me busca carácteres repetidos en las columnas.
+
+select(combined_data_1, num_range('ID', 0:9)) #Columnas que empiecen por ID (en su cabecera) y contengan valores entre el 0 y el 9
+
+#RENOMBRAR Y ORDENAR LAS COLUMNAS
+
+renamed = rename(combined_data_1, Film_1=ID1, Date=date, Row=fila, ID_Customer=ID_customer) #nombre nuevo seguido del antiguo
+
+select(renamed,Film_1, Score, Date, everything()) #especifico el orden inicial y luego, el `everything` me coloca el resto de columnas sin con su orden natural.
+
+
+### MUTATE: CALCULAR NUEVAS VARIABLES A PARTIR DE LAS QUE YA TENEMOS
+
+renamed_new <- select(renamed,
+                      Date,
+                      Score,
+                      ID_Customer,
+                      Film_1,
+                      Row)
+mutate
+
+#En esta sección no hay nada interesante para aplicar en nuestro dataset.
+#En el mutate se suelen aplicar:
+# * Operaciones aritméticas: +, -, *, /, ^ (hours + 60* minutes)
+# * Agregados de funciones: x/sum(x) : proporcion sobre el total
+#                           x - mean(x): distancia respecto de media
+#                           (x-mean(x))/sd(x): tipificación
+#                           (x-min(x))/max(x): estandarizar entre [0,1]
+# * Aritmética modular: %/%-> cociente de la división entera, %% -> resto de la división entera
+#                           x == y * (x%/%y) + (x%%y)
+
+attach(renamed_new)
+Score = as.numeric(Score)
+
+class(Score)
+
+Score
+renamed_new = mutate(renamed_new,
+          Score = as.integer(Score),
+          Mean_Score = mean(Score),
+          Mean_Score_Distance = Score - mean(Score), #cómo de lejos esta la puntuación del usuario de la puntuación media de la peli
+          Percent_Of_Total = ((Score / sum(Score)))*100)
+
+View(renamed_new)
+
+renamed_new
+renamed_new = renamed_new%>% separate(Date,into=c("Year","Month","Day"),sep="-")
+renamed_new
+
+renamed_new$month[Score == max(Score)]
+renamed_new$year[Score == max(Score)]
+renamed_new$day[Score == max(Score)]
+
