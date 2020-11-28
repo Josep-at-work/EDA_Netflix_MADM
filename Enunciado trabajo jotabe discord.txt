@@ -1,0 +1,7 @@
+Buenas! Para aclararos un par de dudas generales de cara  a nuestros dos trabajos:
+- Podeis usar solo R, solo Python o los dos. Se trata que demostréis que sabéis tanto usar lo aprendido como investigar cosas nuevas
+- Debéis incluir un apartado de descriptiva que evaluaré yo (20%), y uno de manejo de datos con tidyverse que evaluará Ricarddo (20%)
+- En general se valorará vuestra capacidad para describir el problema, evaluar el dataset y explicar las variables del problema, hacer un análisis descriptivo de las variables (gráfico, eestadísticos y explicación razonable), estudio dde variables 2 a 2, 3 a 3... como hicimos el otro día en clase
+- Para la parte de tidyverse es important hacer énfasis en la carga de datos, transformación de variables (parse), representación de gráficos con ggplot y demás cosas de tidyverse que habéis aprendido
+- Detallar posibles problemas que se podrían plantear (qué se podría saber o inferir con esos datos), pros y contras de los datos que tenéis (qué más os faltaría para poder hacer un análisis completo) aunque NO QUIERO QUE APLIQUÉIS NINGUN MODELO!!!! Eso lo haremos en el trabajo final, si?
+A falta de detallaros alguna ayudita más que os iremos dando en los próximos días, ya podéis ir combinando vuestras compras de Black Friday y CyberMonday con el trabajo con todo esto, y pensad que al estar en un master, se trata de que si yo fuera el jefe de la empresa y me venís con vuestro informe, me tenéis que convencer de que sois aptos para un puesto de trabajo, si? :smile:
