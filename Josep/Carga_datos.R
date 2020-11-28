@@ -33,22 +33,24 @@ reps=diff(c(filas_ID$fila,max(aux$fila)+1))
 length(reps)
 dim(aux)
 sum(reps)
-combined_data_1=aux %>% mutate(ID1=rep(filas_ID$X1,times=reps)) %>% filter(!(fila %in% filas) ) %>% filter(ID1==ID1[length(IDs)])
-# Que hace el ! en el filter de las filas?
-# El ultimo filtro hace que solo pille los datos para la peli con ID = 1
-# filtro el último pues no sé si lo he leído entero y las entradas 1:
 
 
-# Ahora arreglo la variable X1
 
-combined_data_1= combined_data_1 %>% separate(X1,into=c("ID_customer","Score","date"),sep=",")
-# rm(aux,filas,filas_ID,IDs,reps) remove variables
-
-# Visualizo la tabla
-
-# knitr::kable(combined_data_1) 
-
-summary(combined_data_1)
+# # combined_data_1=aux %>% mutate(ID1=rep(filas_ID$X1,times=reps)) %>% filter(!(fila %in% filas) ) %>% filter(ID1==ID1[length(IDs)])
+# # Que hace el ! en el filter de las filas?
+# # El ultimo filtro hace que solo pille los datos para la peli con ID = 1
+# # filtro el último pues no sé si lo he leído entero y las entradas 1:
+# 
+# # Ahora arreglo la variable X1
+# 
+# # combined_data_1= combined_data_1 %>% separate(X1,into=c("ID_customer","Score","date"),sep=",")
+# # rm(aux,filas,filas_ID,IDs,reps) remove variables
+# 
+# # Visualizo la tabla
+# 
+# # knitr::kable(combined_data_1) 
+# 
+# # summary(combined_data_1)
 
 # Las 8 pelis:
 
@@ -56,5 +58,16 @@ df = aux %>% mutate(ID=rep(filas_ID$X1,times=reps)) %>% filter(!(fila %in% filas
 df = df %>% separate(X1,into=c("ID_customer","Score","date"),sep=",") #separa por comas y da nombre a las columnas.
 
 summary(df) # Las 10K filas menos 8(numero de IDs de las pelis)
+
+length(unique(df$ID_customer)) #9619 usuarios distintos
+table(df$Score) # frecuencia puntuaciones
+table(df$ID) # frecuencia pelis
+df<-mutate(df, fila=NULL) # eliminamos la columna fila
+
+titles = read_csv('Raw data/movie_titles.csv', col_names=F )
+head(titles)
+tt<-tibble(titles)
+head(tt)
+tt <- rename(tt, ID = X1, Year = X2, Title = X3)
 
 
