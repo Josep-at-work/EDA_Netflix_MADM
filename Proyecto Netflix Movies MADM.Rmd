@@ -1,6 +1,6 @@
 ---
 title: "Proyecto Netflix Movies MADM"
-author: "Laura Montes, Josep Roman, Paul Ramírez"
+author: "Laura Moreno, Josep Roman, Paul Ramírez"
 date: "11/28/2020"
 output: html_document
 ---
