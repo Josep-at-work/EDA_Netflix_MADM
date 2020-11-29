@@ -167,3 +167,8 @@ renamed_new$Day[Score == max(Score)]
 # * Logaritmos: log() -> logaritmo en base e, log2(), log10()
 # * Offsets: lead(), lag()
 
+#PRUEBA ORDENAR CHARACTER A ORDENAR INTEGER
+attach(combined_data_1)
+sort(as.integer(ID_customer))
+sort(ID_customer)
+

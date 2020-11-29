@@ -9,11 +9,9 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Laura Montes, Josep Roman, Paul Ramírez" />
 
-<meta name="date" content="2020-11-28" />
 
-<title>Proyecto Netflix Movies MADM</title>
+<title>README.utf8</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -424,137 +422,20 @@ summary {
 
 
 
-<h1 class="title toc-ignore">Proyecto Netflix Movies MADM</h1>
-<h4 class="author">Laura Montes, Josep Roman, Paul Ramírez</h4>
-<h4 class="date">11/28/2020</h4>
 
 </div>
 
 
-<div id="data-wrangle" class="section level1">
-<h1>Data Wrangle</h1>
-<div id="importación-de-datos" class="section level2">
-<h2>Importación de datos</h2>
-<div id="info-de-los-archivos-combined_data_.txt" class="section level4">
-<h4>Info de los archivos “combined_data_.txt”</h4>
-<p>The first line of each file contains the movie id followed by a colon. Each subsequent line in the file corresponds to a rating from a customer and its date in the following format:</p>
-<p>CustomerID,Rating,Date</p>
+<div id="proyecto-netflix-movies-madm" class="section level1">
+<h1>proyecto-netflix-movies-madm</h1>
+<p><a href="https://www.kaggle.com/netflix-inc/netflix-prize-data?select=combined_data_4.txt">Kaggle Origen</a></p>
 <ul>
-<li>MovieIDs range from 1 to 17770 sequentially.</li>
-<li>CustomerIDs range from 1 to 2649429, with gaps. There are 480189 users.</li>
-<li>Ratings are on a five star (integral) scale from 1 to 5.</li>
-<li>Dates have the format YYYY-MM-DD.</li>
+<li>Podeis usar solo R, solo Python o los dos. Se trata que <strong>demostréis que sabéis tanto usar lo aprendido como investigar cosas nuevas.</strong></li>
+<li>Debéis incluir un apartado de <strong>descriptiva</strong> que evaluaré yo (20%), y uno de <strong>manejo de datos con tidyverse</strong> que evaluará Ricarddo (20%)</li>
+<li>En general se valorará vuestra <strong>capacidad para describir el problema</strong>, <strong>evaluar el dataset</strong> y <strong>explicar las variables del problema</strong>, <strong>hacer un análisis descriptivo de las variables</strong> (gráfico, eestadísticos y explicación razonable), <strong>estudio dde variables</strong> 2 a 2, 3 a 3… como hicimos en clase (google colab)</li>
+<li>Para la parte de tidyverse es important hacer énfasis en la <strong>carga de datos, transformación de variables (parse), representación de gráficos con ggplot</strong> y demás cosas de tidyverse que habéis aprendido</li>
+<li>Further projects: Detallar posibles problemas que se podrían plantear (qué se podría saber o inferir con esos datos), pros y contras de los datos que tenéis (qué más os faltaría para poder hacer un análisis completo) aunque <strong>NO QUIERO QUE APLIQUÉIS NINGUN MODELO!!!!</strong></li>
 </ul>
-<pre class="r"><code>aux=read_tsv(&quot;Raw data/combined_data_1.txt&quot;, col_names = FALSE, n_max = 30000) #lectura de las primeras 10^4 filas</code></pre>
-<pre><code>## 
-## -- Column specification --------------------------------------------------------
-## cols(
-##   X1 = col_character()
-## )</code></pre>
-</div>
-</div>
-<div id="orden-de-los-datos" class="section level2">
-<h2>Orden de los datos</h2>
-<pre class="r"><code>aux=aux%&gt;% mutate(fila=row_number()) #añadir columna con número de fila
-filas=grep(&quot;:&quot;,aux$X1) #buscar filas con &quot;:&quot;, filas comienzo nueva pelicula
-filas_ID= aux %&gt;% filter( fila %in% filas ) 
-IDs=unique(filas_ID$X1)
-reps=diff(c(filas_ID$fila,max(aux$fila)+1))
-length(reps)</code></pre>
-<pre><code>## [1] 17</code></pre>
-<pre class="r"><code>dim(aux)</code></pre>
-<pre><code>## [1] 30000     2</code></pre>
-<pre class="r"><code>sum(reps)</code></pre>
-<pre><code>## [1] 30000</code></pre>
-<pre class="r"><code>scores = aux %&gt;% mutate(ID1=rep(filas_ID$X1,times=reps)) %&gt;% filter(!(fila %in% filas) )
-
-#ahora borramos los datos de la última película por si se han cortado a medias
-scores = scores %&gt;% filter( scores$fila &lt; filas_ID$fila[length(filas_ID$fila)-1] )
-
-# Ahora arregloamos la variable X1, y separamos la fecha en año, mes y día
-scores = scores %&gt;% separate(X1,into = c(&quot;CustomerID&quot;,&quot;Score&quot;,&quot;Date&quot;), sep = &quot;,&quot;)
-scores = scores %&gt;% mutate(Date_copy = Date)  %&gt;% separate(Date_copy, into = c(&quot;Year&quot;, &quot;Month&quot;, &quot;Day&quot;), sep = &quot;-&quot;)
-
-#Renombramos y reordenamos las variables
-scores &lt;- rename(scores, MovieID = ID1, RowID = fila)
-scores = scores %&gt;% relocate(RowID, MovieID, CustomerID, Date, Year, Month, Day, Score)
-
-#Quitamos los &quot;:&quot; de el campo MovieID
-scores$MovieID &lt;- scores$MovieID %&gt;% str_replace(&quot;:&quot;, &quot;&quot;)
-
-# Cambiamos los tipos de variable necesarios
-
-scores &lt;- scores %&gt;% mutate(across(c(RowID:CustomerID, Year:Score), as.integer))
-
-
-summary(scores)</code></pre>
-<pre><code>##      RowID          MovieID         CustomerID          Date          
-##  Min.   :    2   Min.   : 1.000   Min.   :      7   Length:21629      
-##  1st Qu.: 5416   1st Qu.: 8.000   1st Qu.: 666743   Class :character  
-##  Median :10823   Median : 8.000   Median :1339769   Mode  :character  
-##  Mean   :10822   Mean   : 7.346   Mean   :1332827                     
-##  3rd Qu.:16230   3rd Qu.: 8.000   3rd Qu.:1994322                     
-##  Max.   :21644   Max.   :15.000   Max.   :2649336                     
-##       Year          Month             Day           Score      
-##  Min.   :2000   Min.   : 1.000   Min.   : 1.0   Min.   :1.000  
-##  1st Qu.:2005   1st Qu.: 4.000   1st Qu.: 8.0   1st Qu.:2.000  
-##  Median :2005   Median : 6.000   Median :16.0   Median :3.000  
-##  Mean   :2005   Mean   : 6.305   Mean   :15.7   Mean   :3.284  
-##  3rd Qu.:2005   3rd Qu.: 8.000   3rd Qu.:23.0   3rd Qu.:4.000  
-##  Max.   :2005   Max.   :12.000   Max.   :31.0   Max.   :5.000</code></pre>
-<p>Info data</p>
-<pre class="r"><code>length(unique(scores$CustomerID)) #9619 usuarios distintos</code></pre>
-<pre><code>## [1] 20537</code></pre>
-<pre class="r"><code>table(scores$Score) # frecuencia puntuaciones</code></pre>
-<pre><code>## 
-##    1    2    3    4    5 
-## 2702 3157 5532 5765 4473</code></pre>
-<pre class="r"><code>table(scores$MovieID) # frecuencia pelis</code></pre>
-<pre><code>## 
-##     1     2     3     4     5     6     7     8     9    10    11    12    13 
-##   547   145  2012   142  1140  1019    93 14910    95   249   198   546   125 
-##    14    15 
-##   118   290</code></pre>
-<pre class="r"><code>scores&lt;-mutate(scores, fila=NULL) # eliminamos la columna fila</code></pre>
-<div id="cargar-csv-títulos" class="section level3">
-<h3>Cargar csv títulos</h3>
-<pre class="r"><code>library(readr)
-movie_titles &lt;- read_csv(&quot;Raw data/movie_titles.csv&quot;)</code></pre>
-<pre><code>## 
-## -- Column specification --------------------------------------------------------
-## cols(
-##   MovieID = col_double(),
-##   ReleaseDate = col_double(),
-##   MovieTitle = col_character()
-## )</code></pre>
-<pre><code>## Warning: 357 parsing failures.
-## row col  expected    actual                        file
-##  72  -- 3 columns 4 columns &#39;Raw data/movie_titles.csv&#39;
-## 264  -- 3 columns 5 columns &#39;Raw data/movie_titles.csv&#39;
-## 350  -- 3 columns 4 columns &#39;Raw data/movie_titles.csv&#39;
-## 366  -- 3 columns 4 columns &#39;Raw data/movie_titles.csv&#39;
-## 394  -- 3 columns 4 columns &#39;Raw data/movie_titles.csv&#39;
-## ... ... ......... ......... ...........................
-## See problems(...) for more details.</code></pre>
-<p>Para incorporar la columna a la tabla ‘Scores’ lo vamos a hacer mediante un <code>left_join</code>. - El <code>left_join</code> se queda con todas las observaciones que aparecen en el primer dataset, es decir, solo tendrá en cuenta las películas que observadas en el primer dataset. - El <code>join</code> entre tablas lo hemos hecho con la columna <code>MovieID</code>, presente en ambas tablas. Tal y como vemos en la tabla <code>movies_titles.csv</code>, cada película tiene un <code>MovieID</code> único, lo que se conoce como <em>clave primaria</em>. No obstante, en la tabla <code>scores</code> cada MovieID puede ser puntuada por varios <code>CustomerID</code>, en este caso, la <em>clave primaria</em> se constituye a partir de la combinación de ambas variables.</p>
-<pre class="r"><code>(scores %&gt;% 
-  left_join(movie_titles,by = &#39;MovieID&#39; ) -&gt; scores)</code></pre>
-<pre><code>## # A tibble: 21,629 x 10
-##    RowID MovieID CustomerID Date   Year Month   Day Score ReleaseDate MovieTitle
-##    &lt;int&gt;   &lt;dbl&gt;      &lt;int&gt; &lt;chr&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;       &lt;dbl&gt; &lt;chr&gt;     
-##  1     2       1    1488844 2005~  2005     9     6     3        2003 Dinosaur ~
-##  2     3       1     822109 2005~  2005     5    13     5        2003 Dinosaur ~
-##  3     4       1     885013 2005~  2005    10    19     4        2003 Dinosaur ~
-##  4     5       1      30878 2005~  2005    12    26     4        2003 Dinosaur ~
-##  5     6       1     823519 2004~  2004     5     3     3        2003 Dinosaur ~
-##  6     7       1     893988 2005~  2005    11    17     3        2003 Dinosaur ~
-##  7     8       1     124105 2004~  2004     8     5     4        2003 Dinosaur ~
-##  8     9       1    1248029 2004~  2004     4    22     3        2003 Dinosaur ~
-##  9    10       1    1842128 2004~  2004     5     9     4        2003 Dinosaur ~
-## 10    11       1    2238063 2005~  2005     5    11     3        2003 Dinosaur ~
-## # ... with 21,619 more rows</code></pre>
-</div>
-</div>
 </div>
 
 
