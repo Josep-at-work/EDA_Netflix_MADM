@@ -1,6 +1,6 @@
 ---
-  title: "Netflix"
-author: "Ricardo"
+  title: "Treball"
+author: "Josep"
 date: "20/11/2020"
 output: html_document
 ---
@@ -73,3 +73,4 @@ summary(tt)
 #Left Join
 scores %<>% left_join(tt, by = 'MovieID') 
 head(scores)
+
