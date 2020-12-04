@@ -1,7 +1,7 @@
 ---
-title: "Proyecto Netflix Movies MADM"
-author: "Laura Moreno, Josep Roman, Paul Ramírez"
-date: "11/28/2020"
+title: "Rmd_Netflix_Paul"
+author: "Paul Ramírez"
+date: "04/12/2020"
 output: html_document
 ---
 
@@ -24,7 +24,7 @@ The first line of each file contains the movie id followed by a colon. Each subs
   
 ```{r, include=FALSE}
 library(tidyverse)
-library(here) #permite ejecutar este rmd desde cualquier carpeta
+library(here)
 library(magrittr) #permite hacer pipes en ambos sentidos
 
 
@@ -71,7 +71,7 @@ scores %<>% mutate(across(c(MovieID:CustomerID, Year:Score), as.integer))
 
 summary(scores)
 ```
-Vemos que tenemos información de la peliculas 1 a la 15, y las puntuaciones se hicieron entre el 2000 y el 2005 (mayoritariamente en 2005). Distribución de los meses y dias en que se puntuo es uniforme. 
+Vemos que tenemos información de la peliculas 1 a la 15, y las puntuaciones se hicieron entre el 200 y el 2005 (mayoritariamente en 2005). Distribución de los meses y dias en que se puntuo es uniforme. 
 
 Veamos más informacion sobre los datos:
 ```{r}
@@ -80,14 +80,9 @@ table(scores$Score) # frecuencia puntuaciones
 table(scores$MovieID) # frecuencia title
 ```
 
-### Cargar csv títulos
+### Cargar títulos
 
 Cargamos el csv de los títulos y hacemos un left join para añadir a la tabla 'scores' los títulos de cada película y el año en que se publicaron
-
-- El `left_join` se queda con todas las observaciones que aparecen en el primer dataset, es decir, solo tendrá en cuenta las películas que observadas en el primer dataset.
-
-- El `join` entre tablas lo hemos hecho con la columna `MovieID`, presente en ambas tablas. Tal y como vemos en la tabla `movies_titles.csv`, cada película tiene un `MovieID` único, lo que se conoce como _clave primaria_. No obstante, en la tabla `scores` cada MovieID puede ser puntuada por varios `CustomerID`, en este caso, la _clave primaria_ se constituye a partir de la combinación de ambas variables.
-
 ```{r}
 rm(titles,tt)
 titles = read_csv(here("Raw data",'movie_titles.csv'), col_names=F)
@@ -100,7 +95,7 @@ titles  %<>% mutate(across(c(MovieID:Release_Year), as.integer))
 scores %<>% left_join(titles, by = 'MovieID') 
 summary(scores); head(scores)
 ```
-
+Se tiene que hacer un left join porque lo que queremos es que la tabla base siga siendo la de scores, y así cuando coincida el MovieID de scores con el de titles, que nos añada la info para esa MovieID que la table de titulos tiene. 
 
 
 
