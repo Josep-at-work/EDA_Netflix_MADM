@@ -33,7 +33,7 @@ rm(aux, scores, titles, tt) #se eliminan las tablas por si las tenemos ya en el 
 
 
 ```{r}
-aux = read_tsv(here("Raw data", "combined_data_1.txt"), col_names = FALSE, n_max = 30000) #lectura de las primeras
+aux = read_tsv(here("Raw data", "combined_data_1.txt"), col_names = FALSE, n_max = 100000) #lectura de las primeras
 ```
 
 ## Orden de los datos
