@@ -56,16 +56,17 @@ scores %<>% mutate(Date_copy = Date)  %>% separate(Date_copy, into = c("Year", "
 
 #Renombramos y reordenamos las variables
 scores %<>% rename(MovieID = ID1)
-scores %<>% relocate(RowID, MovieID, CustomerID, Date, Year, Month, Day, Score)
+scores <- select(scores, -fila) # eliminamos la columna fila
+scores %<>% relocate(MovieID, CustomerID, Date, Year, Month, Day, Score)
 
 #Quitamos los ":" de el campo MovieID
 scores$MovieID <- scores$MovieID %>% str_replace(":", "")
 
 # Cambiamos los tipos de variable necesarios
 
-scores %<>% mutate(across(c(RowID:CustomerID, Year:Score), as.integer))
+scores %<>% mutate(across(c(MovieID:CustomerID, Year:Score), as.integer))
 
-scores <- select(scores, -fila) # eliminamos la columna fila
+
 summary(scores)
 ```
 Vemos que tenemos información de la peliculas 1 a la 15, y las puntuaciones se hicieron entre el 200 y el 2005 (mayoritariamente en 2005). Distribución de los meses y dias en que se puntuo es uniforme. 

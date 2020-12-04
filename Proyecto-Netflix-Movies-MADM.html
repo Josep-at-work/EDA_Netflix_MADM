@@ -9,7 +9,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Laura Montes, Josep Roman, Paul Ramírez" />
+<meta name="author" content="Laura Moreno, Josep Roman, Paul Ramírez" />
 
 <meta name="date" content="2020-11-28" />
 
@@ -412,7 +412,7 @@ summary {
 
 
 <h1 class="title toc-ignore">Proyecto Netflix Movies MADM</h1>
-<h4 class="author">Laura Montes, Josep Roman, Paul Ramírez</h4>
+<h4 class="author">Laura Moreno, Josep Roman, Paul Ramírez</h4>
 <h4 class="date">11/28/2020</h4>
 
 </div>
@@ -432,9 +432,9 @@ summary {
 <li>Ratings are on a five star (integral) scale from 1 to 5.</li>
 <li>Dates have the format YYYY-MM-DD.</li>
 </ul>
-<pre class="r"><code>aux=read_tsv(&quot;Raw data/combined_data_1.txt&quot;, col_names = FALSE, n_max = 30000) #lectura de las primeras 10^4 filas</code></pre>
+<pre class="r"><code>aux = read_tsv(&quot;Raw data/combined_data_1.txt&quot;, col_names = FALSE, n_max = 30000) #lectura de las primeras</code></pre>
 <pre><code>## 
-## ── Column specification ────────────────────────────────────────────────────────
+## -- Column specification --------------------------------------------------------
 ## cols(
 ##   X1 = col_character()
 ## )</code></pre>
@@ -442,11 +442,11 @@ summary {
 </div>
 <div id="orden-de-los-datos" class="section level2">
 <h2>Orden de los datos</h2>
-<pre class="r"><code>aux=aux%&gt;% mutate(fila=row_number()) #añadir columna con número de fila
-filas=grep(&quot;:&quot;,aux$X1) #buscar filas con &quot;:&quot;, filas comienzo nueva pelicula
-filas_ID= aux %&gt;% filter( fila %in% filas ) 
-IDs=unique(filas_ID$X1)
-reps=diff(c(filas_ID$fila,max(aux$fila)+1))
+<pre class="r"><code>aux %&lt;&gt;% mutate(fila=row_number()) #añadir columna con número de fila
+filas = grep(&quot;:&quot;,aux$X1) #buscar filas con &quot;:&quot;, filas comienzo nueva pelicula
+filas_ID = aux %&gt;% filter( fila %in% filas ) 
+IDs = unique(filas_ID$X1)
+reps = diff(c(filas_ID$fila,max(aux$fila)+1))
 length(reps)</code></pre>
 <pre><code>## [1] 17</code></pre>
 <pre class="r"><code>dim(aux)</code></pre>
@@ -456,55 +456,63 @@ length(reps)</code></pre>
 <pre class="r"><code>scores = aux %&gt;% mutate(ID1=rep(filas_ID$X1,times=reps)) %&gt;% filter(!(fila %in% filas) )
 
 #ahora borramos los datos de la última película por si se han cortado a medias
-scores = scores %&gt;% filter( scores$fila &lt; filas_ID$fila[length(filas_ID$fila)-1] )
+scores %&lt;&gt;% filter( scores$fila &lt; filas_ID$fila[length(filas_ID$fila)-1] )
 
 # Ahora arregloamos la variable X1, y separamos la fecha en año, mes y día
-scores = scores %&gt;% separate(X1,into = c(&quot;CustomerID&quot;,&quot;Score&quot;,&quot;Date&quot;), sep = &quot;,&quot;)
-scores = scores %&gt;% mutate(Date_copy = Date)  %&gt;% separate(Date_copy, into = c(&quot;Year&quot;, &quot;Month&quot;, &quot;Day&quot;), sep = &quot;-&quot;)
+scores %&lt;&gt;% separate(X1,into = c(&quot;CustomerID&quot;,&quot;Score&quot;,&quot;Date&quot;), sep = &quot;,&quot;)
+scores %&lt;&gt;% mutate(Date_copy = Date)  %&gt;% separate(Date_copy, into = c(&quot;Year&quot;, &quot;Month&quot;, &quot;Day&quot;), sep = &quot;-&quot;)
 
 #Renombramos y reordenamos las variables
-scores &lt;- rename(scores, MovieID = ID1, RowID = fila)
-scores = scores %&gt;% relocate(RowID, MovieID, CustomerID, Date, Year, Month, Day, Score)
+scores %&lt;&gt;% rename(MovieID = ID1)
+scores &lt;- select(scores, -fila) # eliminamos la columna fila
+scores %&lt;&gt;% relocate(MovieID, CustomerID, Date, Year, Month, Day, Score)
 
 #Quitamos los &quot;:&quot; de el campo MovieID
 scores$MovieID &lt;- scores$MovieID %&gt;% str_replace(&quot;:&quot;, &quot;&quot;)
 
 # Cambiamos los tipos de variable necesarios
 
-scores &lt;- scores %&gt;% mutate(across(c(RowID:CustomerID, Year:Score), as.integer))
+scores %&lt;&gt;% mutate(across(c(MovieID:CustomerID, Year:Score), as.integer))
 
 
 summary(scores)</code></pre>
-<pre><code>##      RowID          MovieID         CustomerID          Date          
-##  Min.   :    2   Min.   : 1.000   Min.   :      7   Length:21629      
-##  1st Qu.: 5416   1st Qu.: 8.000   1st Qu.: 666743   Class :character  
-##  Median :10823   Median : 8.000   Median :1339769   Mode  :character  
-##  Mean   :10822   Mean   : 7.346   Mean   :1332827                     
-##  3rd Qu.:16230   3rd Qu.: 8.000   3rd Qu.:1994322                     
-##  Max.   :21644   Max.   :15.000   Max.   :2649336                     
-##       Year          Month             Day           Score      
-##  Min.   :2000   Min.   : 1.000   Min.   : 1.0   Min.   :1.000  
-##  1st Qu.:2005   1st Qu.: 4.000   1st Qu.: 8.0   1st Qu.:2.000  
-##  Median :2005   Median : 6.000   Median :16.0   Median :3.000  
-##  Mean   :2005   Mean   : 6.305   Mean   :15.7   Mean   :3.284  
-##  3rd Qu.:2005   3rd Qu.: 8.000   3rd Qu.:23.0   3rd Qu.:4.000  
-##  Max.   :2005   Max.   :12.000   Max.   :31.0   Max.   :5.000</code></pre>
-<p>Info data</p>
-<pre class="r"><code>length(unique(scores$CustomerID)) #9619 usuarios distintos</code></pre>
+<pre><code>##     MovieID         CustomerID          Date                Year     
+##  Min.   : 1.000   Min.   :      7   Length:21629       Min.   :2000  
+##  1st Qu.: 8.000   1st Qu.: 666743   Class :character   1st Qu.:2005  
+##  Median : 8.000   Median :1339769   Mode  :character   Median :2005  
+##  Mean   : 7.346   Mean   :1332827                      Mean   :2005  
+##  3rd Qu.: 8.000   3rd Qu.:1994322                      3rd Qu.:2005  
+##  Max.   :15.000   Max.   :2649336                      Max.   :2005  
+##      Month             Day           Score      
+##  Min.   : 1.000   Min.   : 1.0   Min.   :1.000  
+##  1st Qu.: 4.000   1st Qu.: 8.0   1st Qu.:2.000  
+##  Median : 6.000   Median :16.0   Median :3.000  
+##  Mean   : 6.305   Mean   :15.7   Mean   :3.284  
+##  3rd Qu.: 8.000   3rd Qu.:23.0   3rd Qu.:4.000  
+##  Max.   :12.000   Max.   :31.0   Max.   :5.000</code></pre>
+<p>Vemos que tenemos información de la peliculas 1 a la 15, y las puntuaciones se hicieron entre el 200 y el 2005 (mayoritariamente en 2005). Distribución de los meses y dias en que se puntuo es uniforme.</p>
+<p>Veamos más informacion sobre los datos:</p>
+<pre class="r"><code>length(unique(scores$CustomerID)) #20537 usuarios distintos</code></pre>
 <pre><code>## [1] 20537</code></pre>
 <pre class="r"><code>table(scores$Score) # frecuencia puntuaciones</code></pre>
 <pre><code>## 
 ##    1    2    3    4    5 
 ## 2702 3157 5532 5765 4473</code></pre>
-<pre class="r"><code>table(scores$ID) # frecuencia pelis</code></pre>
-<pre><code>## Warning: Unknown or uninitialised column: `ID`.</code></pre>
-<pre><code>## &lt; table of extent 0 &gt;</code></pre>
-<pre class="r"><code>scores&lt;-mutate(scores, fila=NULL) # eliminamos la columna fila</code></pre>
-<div id="cargar-csv-títulos" class="section level3">
-<h3>Cargar csv títulos</h3>
-<pre class="r"><code>titles = read_csv(&#39;Raw data/movie_titles.csv&#39;, col_names=F )</code></pre>
+<pre class="r"><code>table(scores$MovieID) # frecuencia title</code></pre>
 <pre><code>## 
-## ── Column specification ────────────────────────────────────────────────────────
+##     1     2     3     4     5     6     7     8     9    10    11    12    13 
+##   547   145  2012   142  1140  1019    93 14910    95   249   198   546   125 
+##    14    15 
+##   118   290</code></pre>
+<div id="cargar-títulos" class="section level3">
+<h3>Cargar títulos</h3>
+<p>Cargamos el csv de los títulos y hacemos un left join para añadir a la tabla ‘scores’ los títulos de cada película y el año en que se publicaron</p>
+<pre class="r"><code>rm(titles,tt)</code></pre>
+<pre><code>## Warning in rm(titles, tt): object &#39;titles&#39; not found</code></pre>
+<pre><code>## Warning in rm(titles, tt): object &#39;tt&#39; not found</code></pre>
+<pre class="r"><code>titles = read_csv(&#39;Raw data/movie_titles.csv&#39;, col_names=F)</code></pre>
+<pre><code>## 
+## -- Column specification --------------------------------------------------------
 ## cols(
 ##   X1 = col_double(),
 ##   X2 = col_double(),
@@ -519,7 +527,8 @@ summary(scores)</code></pre>
 ## 394  -- 3 columns 4 columns &#39;Raw data/movie_titles.csv&#39;
 ## ... ... ......... ......... ...........................
 ## See problems(...) for more details.</code></pre>
-<pre class="r"><code>head(titles)</code></pre>
+<pre class="r"><code>tt &lt;- tibble(titles)
+head(tt)</code></pre>
 <pre><code>## # A tibble: 6 x 3
 ##      X1    X2 X3                          
 ##   &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;                       
@@ -529,19 +538,42 @@ summary(scores)</code></pre>
 ## 4     4  1994 Paula Abdul&#39;s Get Up &amp; Dance
 ## 5     5  2004 The Rise and Fall of ECW    
 ## 6     6  1997 Sick</code></pre>
-<pre class="r"><code>tt&lt;-tibble(titles)
-tt &lt;- rename(tt, ID = X1, Year = X2, Title = X3)
-head(tt)</code></pre>
-<pre><code>## # A tibble: 6 x 3
-##      ID  Year Title                       
-##   &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;                       
-## 1     1  2003 Dinosaur Planet             
-## 2     2  2004 Isle of Man TT 2004 Review  
-## 3     3  1997 Character                   
-## 4     4  1994 Paula Abdul&#39;s Get Up &amp; Dance
-## 5     5  2004 The Rise and Fall of ECW    
-## 6     6  1997 Sick</code></pre>
-<pre class="r"><code>#inner_join()</code></pre>
+<pre class="r"><code>tt &lt;- rename(tt, MovieID = X1, Release_Year = X2, Title = X3)
+
+#Left Join
+scores %&lt;&gt;% left_join(tt, by = &#39;MovieID&#39;) 
+summary(scores); head(scores)</code></pre>
+<pre><code>##     MovieID         CustomerID          Date                Year     
+##  Min.   : 1.000   Min.   :      7   Length:21629       Min.   :2000  
+##  1st Qu.: 8.000   1st Qu.: 666743   Class :character   1st Qu.:2005  
+##  Median : 8.000   Median :1339769   Mode  :character   Median :2005  
+##  Mean   : 7.346   Mean   :1332827                      Mean   :2005  
+##  3rd Qu.: 8.000   3rd Qu.:1994322                      3rd Qu.:2005  
+##  Max.   :15.000   Max.   :2649336                      Max.   :2005  
+##      Month             Day           Score        Release_Year 
+##  Min.   : 1.000   Min.   : 1.0   Min.   :1.000   Min.   :1947  
+##  1st Qu.: 4.000   1st Qu.: 8.0   1st Qu.:2.000   1st Qu.:2003  
+##  Median : 6.000   Median :16.0   Median :3.000   Median :2004  
+##  Mean   : 6.305   Mean   :15.7   Mean   :3.284   Mean   :2001  
+##  3rd Qu.: 8.000   3rd Qu.:23.0   3rd Qu.:4.000   3rd Qu.:2004  
+##  Max.   :12.000   Max.   :31.0   Max.   :5.000   Max.   :2004  
+##     Title          
+##  Length:21629      
+##  Class :character  
+##  Mode  :character  
+##                    
+##                    
+## </code></pre>
+<pre><code>## # A tibble: 6 x 9
+##   MovieID CustomerID Date       Year Month   Day Score Release_Year Title       
+##     &lt;dbl&gt;      &lt;int&gt; &lt;chr&gt;     &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;        &lt;dbl&gt; &lt;chr&gt;       
+## 1       1    1488844 2005-09-~  2005     9     6     3         2003 Dinosaur Pl~
+## 2       1     822109 2005-05-~  2005     5    13     5         2003 Dinosaur Pl~
+## 3       1     885013 2005-10-~  2005    10    19     4         2003 Dinosaur Pl~
+## 4       1      30878 2005-12-~  2005    12    26     4         2003 Dinosaur Pl~
+## 5       1     823519 2004-05-~  2004     5     3     3         2003 Dinosaur Pl~
+## 6       1     893988 2005-11-~  2005    11    17     3         2003 Dinosaur Pl~</code></pre>
+<p>Se tiene que hacer un left join porque lo que queremos es que la tabla base siga siendo la de scores, y así cuando coincida el MovieID de scores con el de titles, que nos añada la info para esa MovieID que la table de titulos tiene.</p>
 </div>
 </div>
 </div>
