@@ -1,0 +1,126 @@
+---
+title: "Proyecto Netflix Movies MADM"
+author: "Laura Moreno, Josep Roman, Paul Ramírez"
+date: "11/28/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tinytex)
+```
+# Data Wrangle
+
+## Importación de datos
+
+#### Info de los archivos "combined_data_.txt"
+The first line of each file contains the movie id followed by a colon. Each subsequent line in the file corresponds to a rating from a customer and its date in the following format:
+
+  CustomerID,Rating,Date  
+  
+  * MovieIDs range from 1 to 17770 sequentially.
+  * CustomerIDs range from 1 to 2649429, with gaps. There are 480189 users.
+  * Ratings are on a five star (integral) scale from 1 to 5.
+  * Dates have the format YYYY-MM-DD.  
+  
+```{r, include=FALSE}
+library(tidyverse)
+library(magrittr) #permite hacer pipes en ambos sentidos
+
+rm(aux, scores, titles, tt) #se eliminan las tablas por si las tenemos ya en el environment
+```
+
+
+```{r}
+aux = read_tsv("Raw data/combined_data_1.txt", col_names = FALSE, n_max = 30000) #lectura de las primeras
+```
+
+## Orden de los datos
+
+```{r}
+aux %<>% mutate(fila=row_number()) #añadir columna con número de fila
+filas = grep(":",aux$X1) #buscar filas con ":", filas comienzo nueva pelicula
+filas_ID = aux %>% filter( fila %in% filas ) 
+IDs = unique(filas_ID$X1)
+reps = diff(c(filas_ID$fila,max(aux$fila)+1))
+length(reps)
+dim(aux)
+sum(reps)
+scores = aux %>% mutate(ID1=rep(filas_ID$X1,times=reps)) %>% filter(!(fila %in% filas) )
+
+#ahora borramos los datos de la última película por si se han cortado a medias
+scores %<>% filter( scores$fila < filas_ID$fila[length(filas_ID$fila)-1] )
+
+# Ahora arregloamos la variable X1, y separamos la fecha en año, mes y día
+scores %<>% separate(X1,into = c("CustomerID","Score","Date"), sep = ",")
+scores %<>% mutate(Date_copy = Date)  %>% separate(Date_copy, into = c("Year", "Month", "Day"), sep = "-")
+
+#Renombramos y reordenamos las variables
+scores %<>% rename(MovieID = ID1)
+scores <- select(scores, -fila) # eliminamos la columna fila
+scores %<>% relocate(MovieID, CustomerID, Date, Year, Month, Day, Score)
+
+#Quitamos los ":" de el campo MovieID
+scores$MovieID <- scores$MovieID %>% str_replace(":", "")
+
+# Cambiamos los tipos de variable necesarios
+
+scores %<>% mutate(across(c(MovieID:CustomerID, Year:Score), as.integer))
+
+
+summary(scores)
+```
+Vemos que tenemos información de la peliculas 1 a la 15, y las puntuaciones se hicieron entre el 200 y el 2005 (mayoritariamente en 2005). Distribución de los meses y dias en que se puntuo es uniforme. 
+
+Veamos más informacion sobre los datos:
+```{r}
+length(unique(scores$CustomerID)) #20537 usuarios distintos
+table(scores$Score) # frecuencia puntuaciones
+#<<<<<<< HEAD
+table(scores$MovieID) # frecuencia pelis
+scores<-mutate(scores, fila=NULL) # eliminamos la columna fila
+```
+
+### Cargar csv títulos
+
+```{r, include=false}
+library(readr)
+movie_titles <- read_csv("Raw data/movie_titles.csv")
+```
+
+Para incorporar la columna a la tabla 'Scores' lo vamos a hacer mediante un `left_join`.
+
+- El `left_join` se queda con todas las observaciones que aparecen en el primer dataset, es decir, solo tendrá en cuenta las películas que observadas en el primer dataset.
+
+- El `join` entre tablas lo hemos hecho con la columna `MovieID`, presente en ambas tablas. Tal y como vemos en la tabla `movies_titles.csv`, cada película tiene un `MovieID` único, lo que se conoce como _clave primaria_. No obstante, en la tabla `scores` cada MovieID puede ser puntuada por varios `CustomerID`, en este caso, la _clave primaria_ se constituye a partir de la combinación de ambas variables.
+
+```{r}
+(scores %>% 
+  left_join(movie_titles,by = 'MovieID' ) -> scores)
+```
+=======
+table(scores$MovieID) # frecuencia title
+```
+
+### Cargar títulos
+
+Cargamos el csv de los títulos y hacemos un left join para añadir a la tabla 'scores' los títulos de cada película y el año en que se publicaron
+```{r}
+rm(titles,tt)
+titles = read_csv('Raw data/movie_titles.csv', col_names=F)
+tt <- tibble(titles)
+head(tt)
+tt <- rename(tt, MovieID = X1, Release_Year = X2, Title = X3)
+
+
+#Left Join
+scores %<>% left_join(tt, by = 'MovieID') 
+summary(scores); head(scores)
+```
+Se tiene que hacer un left join porque lo que queremos es que la tabla base siga siendo la de scores, y así cuando coincida el MovieID de scores con el de titles, que nos añada la info para esa MovieID que la table de titulos tiene. 
+
+
+
+
