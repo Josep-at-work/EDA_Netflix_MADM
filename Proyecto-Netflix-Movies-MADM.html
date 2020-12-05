@@ -418,13 +418,36 @@ summary {
 </div>
 
 
-<div id="data-wrangle" class="section level1">
-<h1>Data Wrangle</h1>
-<div id="importación-de-datos" class="section level2">
-<h2>Importación de datos</h2>
-<div id="info-de-los-archivos-combined_data_.txt" class="section level4">
-<h4>Info de los archivos “combined_data_.txt”</h4>
-<p>The first line of each file contains the movie id followed by a colon. Each subsequent line in the file corresponds to a rating from a customer and its date in the following format:</p>
+<div id="tabla-de-contenidos" class="section level3">
+<h3>Tabla de Contenidos</h3>
+<ol style="list-style-type: decimal">
+<li><p>Objetivo</p></li>
+<li><p>Data Wrangle</p>
+<ol style="list-style-type: decimal">
+<li>Importación de datos</li>
+<li>Limpieza de datos</li>
+</ol></li>
+<li><p>Estadística Descriptiva</p>
+<ol style="list-style-type: decimal">
+<li>Puntuaciones por fecha</li>
+<li>Puntuaciones por película</li>
+<li>Puntuaciones por usuario</li>
+<li>Número de puntuaciones por película, usuario y año lanzamiento</li>
+<li>Distribucion de los scores (boxplot,barplot)</li>
+<li>Series temporales de puntuaciones</li>
+<li>Distribución de cuantos usuarios evaluan cuantas pelis totales y diferentes</li>
+</ol></li>
+<li><p>Sistema de Recomendación / Similaridad (opcional)</p></li>
+</ol>
+</div>
+<div id="objetivo" class="section level2">
+<h2>1. Objetivo</h2>
+</div>
+<div id="data-wrangle" class="section level2">
+<h2>2. Data Wrangle</h2>
+<div id="importación-de-datos" class="section level3">
+<h3>2.1 Importación de datos</h3>
+<p><strong>Info de los archivos “combined_data_.txt”</strong> The first line of each file contains the movie id followed by a colon. Each subsequent line in the file corresponds to a rating from a customer and its date in the following format:</p>
 <p>CustomerID,Rating,Date</p>
 <ul>
 <li>MovieIDs range from 1 to 17770 sequentially.</li>
@@ -432,16 +455,39 @@ summary {
 <li>Ratings are on a five star (integral) scale from 1 to 5.</li>
 <li>Dates have the format YYYY-MM-DD.</li>
 </ul>
+<p><strong>Carga archivo puntuaciones películas</strong></p>
 <pre class="r"><code>aux = read_tsv(here(&quot;Raw data&quot;, &quot;combined_data_1.txt&quot;), col_names = FALSE, n_max = 30000) #lectura de las primeras</code></pre>
 <pre><code>## 
 ## -- Column specification --------------------------------------------------------
 ## cols(
 ##   X1 = col_character()
 ## )</code></pre>
+<p><strong>Carga archivo titulos películas</strong></p>
+<pre class="r"><code>rm(titles,tt)</code></pre>
+<pre><code>## Warning in rm(titles, tt): object &#39;titles&#39; not found</code></pre>
+<pre><code>## Warning in rm(titles, tt): object &#39;tt&#39; not found</code></pre>
+<pre class="r"><code>titles = read_csv(here(&quot;Raw data&quot;,&#39;movie_titles.csv&#39;), col_names=F)</code></pre>
+<pre><code>## 
+## -- Column specification --------------------------------------------------------
+## cols(
+##   X1 = col_character(),
+##   X2 = col_character(),
+##   X3 = col_character()
+## )</code></pre>
+<pre><code>## Warning: 343 parsing failures.
+## row col  expected    actual                                                                                          file
+##  73  -- 3 columns 4 columns &#39;C:/Developer MADM/Cursos MADM Github/proyecto-netflix-movies-madm/Raw data/movie_titles.csv&#39;
+## 265  -- 3 columns 5 columns &#39;C:/Developer MADM/Cursos MADM Github/proyecto-netflix-movies-madm/Raw data/movie_titles.csv&#39;
+## 351  -- 3 columns 4 columns &#39;C:/Developer MADM/Cursos MADM Github/proyecto-netflix-movies-madm/Raw data/movie_titles.csv&#39;
+## 367  -- 3 columns 4 columns &#39;C:/Developer MADM/Cursos MADM Github/proyecto-netflix-movies-madm/Raw data/movie_titles.csv&#39;
+## 395  -- 3 columns 4 columns &#39;C:/Developer MADM/Cursos MADM Github/proyecto-netflix-movies-madm/Raw data/movie_titles.csv&#39;
+## ... ... ......... ......... .............................................................................................
+## See problems(...) for more details.</code></pre>
+<pre class="r"><code>titles &lt;- tibble(titles)</code></pre>
 </div>
-</div>
-<div id="orden-de-los-datos" class="section level2">
-<h2>Orden de los datos</h2>
+<div id="limpieza-de-los-datos" class="section level3">
+<h3>2.2 Limpieza de los datos</h3>
+<p>Limpieza datos puntuaciones películas</p>
 <pre class="r"><code>aux %&lt;&gt;% mutate(fila=row_number()) #añadir columna con número de fila
 filas = grep(&quot;:&quot;,aux$X1) #buscar filas con &quot;:&quot;, filas comienzo nueva pelicula
 filas_ID = aux %&gt;% filter( fila %in% filas ) 
@@ -473,16 +519,17 @@ scores$MovieID &lt;- scores$MovieID %&gt;% str_replace(&quot;:&quot;, &quot;&quo
 # Cambiamos los tipos de variable necesarios
 
 scores %&lt;&gt;% mutate(across(c(MovieID:CustomerID, Year:Score), as.integer))
+scores %&lt;&gt;% mutate(Date = as.Date(Date))
 
 
 summary(scores)</code></pre>
-<pre><code>##     MovieID         CustomerID          Date                Year     
-##  Min.   : 1.000   Min.   :      7   Length:21629       Min.   :2000  
-##  1st Qu.: 8.000   1st Qu.: 666743   Class :character   1st Qu.:2005  
-##  Median : 8.000   Median :1339769   Mode  :character   Median :2005  
-##  Mean   : 7.346   Mean   :1332827                      Mean   :2005  
-##  3rd Qu.: 8.000   3rd Qu.:1994322                      3rd Qu.:2005  
-##  Max.   :15.000   Max.   :2649336                      Max.   :2005  
+<pre><code>##     MovieID         CustomerID           Date                 Year     
+##  Min.   : 1.000   Min.   :      7   Min.   :2000-01-13   Min.   :2000  
+##  1st Qu.: 8.000   1st Qu.: 666743   1st Qu.:2005-03-28   1st Qu.:2005  
+##  Median : 8.000   Median :1339769   Median :2005-05-17   Median :2005  
+##  Mean   : 7.346   Mean   :1332827   Mean   :2005-04-03   Mean   :2005  
+##  3rd Qu.: 8.000   3rd Qu.:1994322   3rd Qu.:2005-08-02   3rd Qu.:2005  
+##  Max.   :15.000   Max.   :2649336   Max.   :2005-12-31   Max.   :2005  
 ##      Month             Day           Score      
 ##  Min.   : 1.000   Min.   : 1.0   Min.   :1.000  
 ##  1st Qu.: 4.000   1st Qu.: 8.0   1st Qu.:2.000  
@@ -504,35 +551,8 @@ summary(scores)</code></pre>
 ##   547   145  2012   142  1140  1019    93 14910    95   249   198   546   125 
 ##    14    15 
 ##   118   290</code></pre>
-<div id="cargar-csv-títulos" class="section level3">
-<h3>Cargar csv títulos</h3>
-<p>Cargamos el csv de los títulos y hacemos un left join para añadir a la tabla ‘scores’ los títulos de cada película y el año en que se publicaron</p>
-<ul>
-<li><p>El <code>left_join</code> se queda con todas las observaciones que aparecen en el primer dataset, es decir, solo tendrá en cuenta las películas que observadas en el primer dataset.</p></li>
-<li><p>El <code>join</code> entre tablas lo hemos hecho con la columna <code>MovieID</code>, presente en ambas tablas. Tal y como vemos en la tabla <code>movies_titles.csv</code>, cada película tiene un <code>MovieID</code> único, lo que se conoce como <em>clave primaria</em>. No obstante, en la tabla <code>scores</code> cada MovieID puede ser puntuada por varios <code>CustomerID</code>, en este caso, la <em>clave primaria</em> se constituye a partir de la combinación de ambas variables.</p></li>
-</ul>
-<pre class="r"><code>rm(titles,tt)</code></pre>
-<pre><code>## Warning in rm(titles, tt): object &#39;titles&#39; not found</code></pre>
-<pre><code>## Warning in rm(titles, tt): object &#39;tt&#39; not found</code></pre>
-<pre class="r"><code>titles = read_csv(here(&quot;Raw data&quot;,&#39;movie_titles.csv&#39;), col_names=F)</code></pre>
-<pre><code>## 
-## -- Column specification --------------------------------------------------------
-## cols(
-##   X1 = col_character(),
-##   X2 = col_character(),
-##   X3 = col_character()
-## )</code></pre>
-<pre><code>## Warning: 343 parsing failures.
-## row col  expected    actual                                                                                          file
-##  73  -- 3 columns 4 columns &#39;C:/Developer MADM/Cursos MADM Github/proyecto-netflix-movies-madm/Raw data/movie_titles.csv&#39;
-## 265  -- 3 columns 5 columns &#39;C:/Developer MADM/Cursos MADM Github/proyecto-netflix-movies-madm/Raw data/movie_titles.csv&#39;
-## 351  -- 3 columns 4 columns &#39;C:/Developer MADM/Cursos MADM Github/proyecto-netflix-movies-madm/Raw data/movie_titles.csv&#39;
-## 367  -- 3 columns 4 columns &#39;C:/Developer MADM/Cursos MADM Github/proyecto-netflix-movies-madm/Raw data/movie_titles.csv&#39;
-## 395  -- 3 columns 4 columns &#39;C:/Developer MADM/Cursos MADM Github/proyecto-netflix-movies-madm/Raw data/movie_titles.csv&#39;
-## ... ... ......... ......... .............................................................................................
-## See problems(...) for more details.</code></pre>
-<pre class="r"><code>titles &lt;- tibble(titles)
-head(titles)</code></pre>
+<p>Limpieza datos títulos películas</p>
+<pre class="r"><code>head(titles)</code></pre>
 <pre><code>## # A tibble: 6 x 3
 ##   X1      X2          X3                          
 ##   &lt;chr&gt;   &lt;chr&gt;       &lt;chr&gt;                       
@@ -552,16 +572,21 @@ titles  %&lt;&gt;% mutate(across(c(MovieID:Release_Year), as.integer))</code></p
 ## i NAs introduced by coercion
 ## i Input `..1` is `across(c(MovieID:Release_Year), as.integer)`.</code></pre>
 <pre><code>## Warning in fn(col, ...): NAs introduced by coercion</code></pre>
-<pre class="r"><code>#Left Join
-scores %&lt;&gt;% left_join(titles, by = &#39;MovieID&#39;) 
+<p>**Left join de puntuaciones películas con los títulos</p>
+<p>Hacemos un left join con ‘titles’ para añadir a la tabla ‘scores’ los títulos de cada película y el año en que se publicaron</p>
+<ul>
+<li><p>El <code>left_join</code> se queda con todas las observaciones que aparecen en el primer dataset, es decir, solo tendrá en cuenta las películas que observadas en el primer dataset.</p></li>
+<li><p>El <code>join</code> entre tablas lo hemos hecho con la columna <code>MovieID</code>, presente en ambas tablas. Tal y como vemos en la tabla <code>movies_titles.csv</code>, cada película tiene un <code>MovieID</code> único, lo que se conoce como <em>clave primaria</em>. No obstante, en la tabla <code>scores</code> cada MovieID puede ser puntuada por varios <code>CustomerID</code>, en este caso, la <em>clave primaria</em> se constituye a partir de la combinación de ambas variables.</p></li>
+</ul>
+<pre class="r"><code>scores %&lt;&gt;% left_join(titles, by = &#39;MovieID&#39;) 
 summary(scores); head(scores)</code></pre>
-<pre><code>##     MovieID         CustomerID          Date                Year     
-##  Min.   : 1.000   Min.   :      7   Length:21629       Min.   :2000  
-##  1st Qu.: 8.000   1st Qu.: 666743   Class :character   1st Qu.:2005  
-##  Median : 8.000   Median :1339769   Mode  :character   Median :2005  
-##  Mean   : 7.346   Mean   :1332827                      Mean   :2005  
-##  3rd Qu.: 8.000   3rd Qu.:1994322                      3rd Qu.:2005  
-##  Max.   :15.000   Max.   :2649336                      Max.   :2005  
+<pre><code>##     MovieID         CustomerID           Date                 Year     
+##  Min.   : 1.000   Min.   :      7   Min.   :2000-01-13   Min.   :2000  
+##  1st Qu.: 8.000   1st Qu.: 666743   1st Qu.:2005-03-28   1st Qu.:2005  
+##  Median : 8.000   Median :1339769   Median :2005-05-17   Median :2005  
+##  Mean   : 7.346   Mean   :1332827   Mean   :2005-04-03   Mean   :2005  
+##  3rd Qu.: 8.000   3rd Qu.:1994322   3rd Qu.:2005-08-02   3rd Qu.:2005  
+##  Max.   :15.000   Max.   :2649336   Max.   :2005-12-31   Max.   :2005  
 ##      Month             Day           Score        Release_Year 
 ##  Min.   : 1.000   Min.   : 1.0   Min.   :1.000   Min.   :1947  
 ##  1st Qu.: 4.000   1st Qu.: 8.0   1st Qu.:2.000   1st Qu.:2003  
@@ -577,16 +602,99 @@ summary(scores); head(scores)</code></pre>
 ##                    
 ## </code></pre>
 <pre><code>## # A tibble: 6 x 9
-##   MovieID CustomerID Date       Year Month   Day Score Release_Year Title       
-##     &lt;int&gt;      &lt;int&gt; &lt;chr&gt;     &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;        &lt;int&gt; &lt;chr&gt;       
-## 1       1    1488844 2005-09-~  2005     9     6     3         2003 Dinosaur Pl~
-## 2       1     822109 2005-05-~  2005     5    13     5         2003 Dinosaur Pl~
-## 3       1     885013 2005-10-~  2005    10    19     4         2003 Dinosaur Pl~
-## 4       1      30878 2005-12-~  2005    12    26     4         2003 Dinosaur Pl~
-## 5       1     823519 2004-05-~  2004     5     3     3         2003 Dinosaur Pl~
-## 6       1     893988 2005-11-~  2005    11    17     3         2003 Dinosaur Pl~</code></pre>
+##   MovieID CustomerID Date        Year Month   Day Score Release_Year Title      
+##     &lt;int&gt;      &lt;int&gt; &lt;date&gt;     &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;        &lt;int&gt; &lt;chr&gt;      
+## 1       1    1488844 2005-09-06  2005     9     6     3         2003 Dinosaur P~
+## 2       1     822109 2005-05-13  2005     5    13     5         2003 Dinosaur P~
+## 3       1     885013 2005-10-19  2005    10    19     4         2003 Dinosaur P~
+## 4       1      30878 2005-12-26  2005    12    26     4         2003 Dinosaur P~
+## 5       1     823519 2004-05-03  2004     5     3     3         2003 Dinosaur P~
+## 6       1     893988 2005-11-17  2005    11    17     3         2003 Dinosaur P~</code></pre>
 </div>
 </div>
+<div id="estadística-descriptiva" class="section level2">
+<h2>3. Estadística Descriptiva</h2>
+<p>Valoración media por película, de mayor a menor:</p>
+<pre class="r"><code>movie_score_avg &lt;- scores %&gt;%
+  group_by(MovieID) %&gt;%
+  summarise(Mean_Score = mean(Score), n = n()) %&gt;%
+  left_join(titles, by = &quot;MovieID&quot;) %&gt;%
+  arrange(desc(Mean_Score))</code></pre>
+<pre><code>## `summarise()` ungrouping output (override with `.groups` argument)</code></pre>
+<pre class="r"><code>movie_score_avg</code></pre>
+<pre><code>## # A tibble: 15 x 5
+##    MovieID Mean_Score     n Release_Year Title                                  
+##      &lt;int&gt;      &lt;dbl&gt; &lt;int&gt;        &lt;int&gt; &lt;chr&gt;                                  
+##  1      13       4.55   125         2003 Lord of the Rings: The Return of the K~
+##  2       5       3.92  1140         2004 The Rise and Fall of ECW               
+##  3       1       3.75   547         2003 Dinosaur Planet                        
+##  4       3       3.64  2012         1997 Character                              
+##  5       2       3.56   145         2004 Isle of Man TT 2004 Review             
+##  6      12       3.42   546         1947 My Favorite Brunette                   
+##  7      15       3.29   290         1988 Neil Diamond: Greatest Hits Live       
+##  8       8       3.19 14910         2004 What the #$*! Do We Know!?             
+##  9      10       3.18   249         2001 Fighter                                
+## 10       6       3.08  1019         1997 Sick                                   
+## 11      11       3.03   198         1999 Full Frame: Documentary Shorts         
+## 12      14       3.03   118         1982 Nature: Antarctica                     
+## 13       4       2.74   142         1994 Paula Abdul&#39;s Get Up &amp; Dance           
+## 14       9       2.62    95         1991 Class of Nuke &#39;Em High 2               
+## 15       7       2.13    93         1992 8 Man</code></pre>
+<p>Valoración media por ‘Release_Year’, de mayor a menor:</p>
+<pre class="r"><code>release_year_score_avg &lt;- scores %&gt;%
+  group_by(Release_Year) %&gt;%
+  summarise(Mean_Score = mean(Score), n = n()) %&gt;%
+  arrange(desc(Mean_Score))</code></pre>
+<pre><code>## `summarise()` ungrouping output (override with `.groups` argument)</code></pre>
+<pre class="r"><code>release_year_score_avg</code></pre>
+<pre><code>## # A tibble: 11 x 3
+##    Release_Year Mean_Score     n
+##           &lt;int&gt;      &lt;dbl&gt; &lt;int&gt;
+##  1         2003       3.90   672
+##  2         1997       3.45  3031
+##  3         1947       3.42   546
+##  4         1988       3.29   290
+##  5         2004       3.24 16195
+##  6         2001       3.18   249
+##  7         1999       3.03   198
+##  8         1982       3.03   118
+##  9         1994       2.74   142
+## 10         1991       2.62    95
+## 11         1992       2.13    93</code></pre>
+<p>Valoración media por día de la semana, de mayor a menor:</p>
+<pre class="r"><code>scores_day_week &lt;- scores %&gt;% mutate(Day_Week = weekdays(Date))
+scores_day_week %&lt;&gt;% mutate(Is_Weekend = isWeekend(Date))
+
+day_week_score_avg &lt;- scores_day_week %&gt;%
+  group_by(Day_Week) %&gt;%
+  summarise(Mean_Score = mean(Score), n = n()) %&gt;%
+  arrange(desc(Mean_Score))</code></pre>
+<pre><code>## `summarise()` ungrouping output (override with `.groups` argument)</code></pre>
+<pre class="r"><code>day_week_score_avg</code></pre>
+<pre><code>## # A tibble: 7 x 3
+##   Day_Week  Mean_Score     n
+##   &lt;chr&gt;          &lt;dbl&gt; &lt;int&gt;
+## 1 Friday          3.32  2767
+## 2 Thursday        3.31  2974
+## 3 Saturday        3.31  1851
+## 4 Tuesday         3.29  4094
+## 5 Monday          3.29  4230
+## 6 Wednesday       3.26  3537
+## 7 Sunday          3.22  2176</code></pre>
+<p>Valoración media entre semana / fin de semana:</p>
+<pre class="r"><code>weekend_weekday_score_avg &lt;- scores_day_week %&gt;%
+  group_by(Is_Weekend) %&gt;%
+  summarise(Mean_Score = mean(Score), n = n())</code></pre>
+<pre><code>## `summarise()` ungrouping output (override with `.groups` argument)</code></pre>
+<pre class="r"><code>weekend_weekday_score_avg</code></pre>
+<pre><code>## # A tibble: 2 x 3
+##   Is_Weekend Mean_Score     n
+##   &lt;lgl&gt;           &lt;dbl&gt; &lt;int&gt;
+## 1 FALSE            3.29 17602
+## 2 TRUE             3.26  4027</code></pre>
+<pre class="r"><code>n_scores_weekend = weekend_weekday_score_avg  %&gt;% filter(Is_Weekend == TRUE) %&gt;% select(n)
+n_scores = sum(weekend_weekday_score_avg$n)
+n_scores_weekend_weekday_ratio = n_scores_weekend / n_scores #el 18% de las valoraciones son en fin de semana, que es menos que el 28% de días que son fin de semana</code></pre>
 </div>
 
 
