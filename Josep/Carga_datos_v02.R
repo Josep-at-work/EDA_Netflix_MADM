@@ -29,10 +29,10 @@ for(i in 1:nrow(pelis)){
   if (data[i]==1){
     scores = rbind(scores,data1[fila[i]:fila_final[i],])
   }
-  if (data[i]==2){
+  else if (data[i]==2){
     scores = rbind(scores,data2[fila[i]:fila_final[i],])
   }
-  if (data[i]==3){
+  else if (data[i]==3){
     scores = rbind(scores,data3[fila[i]:fila_final[i],])
   }
   else {
@@ -40,4 +40,4 @@ for(i in 1:nrow(pelis)){
   }
 }  
 scores
-write_csv(scores,"nuestras_pelis.csv")
+write_csv(scores,"nuestras_pelis_raw.csv")
