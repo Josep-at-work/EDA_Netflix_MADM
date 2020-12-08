@@ -36,6 +36,8 @@ rm(aux, scores, titles, tt) #se eliminan las tablas por si las tenemos ya en el 
 
 ## Importación de datos
 
+### Importación datos puntuaciones películas
+
 **Info de los archivos "combined_data_.txt"**
 The first line of each file contains the movie id followed by a colon. Each subsequent line in the file corresponds to a rating from a customer and its date in the following format:
 
@@ -50,18 +52,21 @@ The first line of each file contains the movie id followed by a colon. Each subs
 
 ```
 
+
 **Carga archivo puntuaciones películas**
-```{r}
+```{r, warning=FALSE, message=FALSE}
 aux = read_tsv(here("Raw data", "combined_data_1.txt"), col_names = FALSE, n_max = 30000) #lectura de las primeras
 
 
 ```
+### Importación datos información sobre las películas
 
 **Carga archivo titulos películas**
-```{r}
+```{r, warning=FALSE, message=FALSE}
 rm(titles,tt)
-titles = read_csv(here("Raw data",'movie_titles.csv'), col_names=F)
-titles <- tibble(titles)
+#algunas peliculas tienen una coma en su nombre, así que cargamos primero todo como una única columna, para luego dividirlo en 3, y hacer un merge la parte de los títulos despues de la coma
+titles = read_table(here("Raw data",'movie_titles.csv')) %>%
+  separate(col = 1, into = c("MovieID", "Release_Year", "Title"), sep = ",", extra = "merge")
 ```
 
 
@@ -69,9 +74,9 @@ titles <- tibble(titles)
 
 ## Limpieza de los datos
 
-Limpieza datos puntuaciones películas
+### Limpieza datos puntuaciones películas
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 aux %<>% mutate(fila=row_number()) #añadir columna con número de fila
 filas = grep(":",aux$X1) #buscar filas con ":", filas comienzo nueva pelicula
 filas_ID = aux %>% filter( fila %in% filas ) 
@@ -108,15 +113,14 @@ summary(scores)
 Vemos que tenemos información de la peliculas 1 a la 15, y las puntuaciones se hicieron entre el 2000 y el 2005 (mayoritariamente en 2005). Distribución de los meses y dias en que se puntuo es uniforme. 
 
 Veamos más informacion sobre los datos:
-```{r}
+```{r, warning=FALSE, message=FALSE}
 length(unique(scores$CustomerID)) #20537 usuarios distintos
 table(scores$Score) # frecuencia puntuaciones
 table(scores$MovieID) # frecuencia title
 ```
-Limpieza datos títulos películas
-```{r}
+### Limpieza datos títulos películas
+```{r, warning=FALSE, message=FALSE}
 head(titles)
-titles %<>% rename(MovieID = X1, Release_Year = X2, Title = X3)
 titles  %<>% mutate(across(c(MovieID:Release_Year), as.integer))
 ```
 
@@ -128,7 +132,7 @@ Hacemos un left join con 'titles' para añadir a la tabla 'scores' los títulos 
 
 - El `join` entre tablas lo hemos hecho con la columna `MovieID`, presente en ambas tablas. Tal y como vemos en la tabla `movies_titles.csv`, cada película tiene un `MovieID` único, lo que se conoce como _clave primaria_. No obstante, en la tabla `scores` cada MovieID puede ser puntuada por varios `CustomerID`, en este caso, la _clave primaria_ se constituye a partir de la combinación de ambas variables.
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 scores %<>% left_join(titles, by = 'MovieID') 
 summary(scores); head(scores)
 
@@ -169,7 +173,7 @@ exploratorio anterior.
 
 Valoración media por película, de mayor a menor:
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 movie_score_avg <- scores %>%
   group_by(MovieID) %>%
   summarise(Mean_Score = mean(Score), n = n()) %>%
@@ -182,7 +186,7 @@ movie_score_avg
 
 Valoración media por 'Release_Year', de mayor a menor:
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 release_year_score_avg <- scores %>%
   group_by(Release_Year) %>%
   summarise(Mean_Score = mean(Score), n = n()) %>%
@@ -193,7 +197,7 @@ release_year_score_avg
 
 Valoración media por día de la semana, de mayor a menor:
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 scores_day_week <- scores %>% mutate(Day_Week = weekdays(Date))
 scores_day_week %<>% mutate(Is_Weekend = isWeekend(Date))
 
@@ -207,7 +211,7 @@ day_week_score_avg
 
 Valoración media entre semana / fin de semana:
   
-```{r}
+```{r, warning=FALSE, message=FALSE}
 weekend_weekday_score_avg <- scores_day_week %>%
   group_by(Is_Weekend) %>%
   summarise(Mean_Score = mean(Score), n = n())
