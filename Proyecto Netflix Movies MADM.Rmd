@@ -15,7 +15,7 @@ citecolor: blue
 toccolor: blue
 urlcolor: blue
 ---
-
+\fontsize{8}{8}
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -140,6 +140,12 @@ titles = read_table(here("Data",'movie_titles_raw.csv'), col_names=F) %>%
 
 <!-- scores %<>% mutate(across(c(MovieID:CustomerID, Year:Score), as.integer)) -->
 <!-- scores %<>% mutate(Date = as.Date(Date)) -->
+```{r}
+scores %<>% mutate(across(c(MovieID:CustomerID, Year:Score), as.integer))
+scores %<>% mutate(Date = as.Date(Date))
+scores %<>% mutate(Day = as.numeric(Day))
+
+```
 
 <!-- # Exportamos el archivo csv limpio para trabajar con el a partir de ahora -->
 <!-- write_path = here("Data") -->

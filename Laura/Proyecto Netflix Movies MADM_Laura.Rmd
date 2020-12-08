@@ -34,7 +34,7 @@ rm(aux, scores, titles, tt) #se eliminan las tablas por si las tenemos ya en el 
 
 
 ```{r}
-aux = read_tsv("Raw data/combined_data_1.txt", col_names = FALSE, n_max = 30000) #lectura de las primeras
+aux = read_tsv("combined_data_1.txt", col_names = FALSE, n_max = 30000) #lectura de las primeras
 ```
 
 ## Orden de los datos
@@ -87,7 +87,7 @@ scores<-mutate(scores, fila=NULL) # eliminamos la columna fila
 
 ```{r, include=false}
 library(readr)
-movie_titles <- read_csv("Raw data/movie_titles.csv")
+movie_titles <- read_csv("movie_titles.csv")
 ```
 
 Para incorporar la columna a la tabla 'Scores' lo vamos a hacer mediante un `left_join`.
@@ -102,25 +102,29 @@ Para incorporar la columna a la tabla 'Scores' lo vamos a hacer mediante un `lef
 ```
 =======
 table(scores$MovieID) # frecuencia title
-```
+
 
 ### Cargar títulos
 
 Cargamos el csv de los títulos y hacemos un left join para añadir a la tabla 'scores' los títulos de cada película y el año en que se publicaron
 ```{r}
 rm(titles,tt)
-titles = read_csv('Raw data/movie_titles.csv', col_names=F)
+titles = read_csv('movie_titles.csv', col_names=F)
 tt <- tibble(titles)
 head(tt)
 tt <- rename(tt, MovieID = X1, Release_Year = X2, Title = X3)
 
 
+
 #Left Join
-scores %<>% left_join(tt, by = 'MovieID') 
-summary(scores); head(scores)
+#scores %<>% left_join(tt, by = 'MovieID') 
+#summary(scores); head(scores)
 ```
 Se tiene que hacer un left join porque lo que queremos es que la tabla base siga siendo la de scores, y así cuando coincida el MovieID de scores con el de titles, que nos añada la info para esa MovieID que la table de titulos tiene. 
 
+```{r}
+library(lubridate)
+```
 
 
 
