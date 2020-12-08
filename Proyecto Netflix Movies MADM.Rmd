@@ -26,8 +26,9 @@ library(here) #permite ejecutar este rmd desde cualquier carpeta
 library(timeDate)
 library(magrittr) #permite hacer pipes en ambos sentidos
 
-rm(aux, scores, titles, tt) #se eliminan las tablas por si las tenemos ya en el environment
-
+# rm(aux, scores, titles, tt) #se eliminan las tablas por si las tenemos ya en el environment
+rm(list=ls())
+cat("\014")
 ```
 
 # Objetivo
@@ -56,9 +57,7 @@ The first line of each file contains the movie id followed by a colon. Each subs
 
 **Carga archivo puntuaciones películas**
 ```{r, warning=FALSE, message=FALSE}
-aux = read_tsv(here("Raw data", "combined_data_1.txt"), col_names = FALSE, n_max = 30000) #lectura de las primeras
-
-
+aux = read_csv(here("Data", "nuestras_pelis.csv"), col_names = T)
 ```
 ### Importación datos información sobre las películas
 
@@ -66,12 +65,9 @@ aux = read_tsv(here("Raw data", "combined_data_1.txt"), col_names = FALSE, n_max
 ```{r, warning=FALSE, message=FALSE}
 rm(titles,tt)
 #algunas peliculas tienen una coma en su nombre, así que cargamos primero todo como una única columna, para luego dividirlo en 3, y hacer un merge la parte de los títulos despues de la coma
-titles = read_table(here("Raw data",'movie_titles.csv')) %>%
+titles = read_table(here("Data",'movie_titles.csv'), col_names=F) %>%
   separate(col = 1, into = c("MovieID", "Release_Year", "Title"), sep = ",", extra = "merge")
 ```
-
-
-
 
 ## Limpieza de los datos
 
