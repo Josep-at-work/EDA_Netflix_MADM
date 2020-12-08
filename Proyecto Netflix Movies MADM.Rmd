@@ -296,6 +296,12 @@ tab_sample <- table(sample$Release_Year, sample$Mean_Score)
 prop.table(tab_sample, margin = 1)
 ```
 
+```{r}
+plot(x = sample$Release_Year, y = sample$n, col = 'green', 
+     main = "test", xlab = "n", ylab = "Release_Year")
+legend(x = "topleft", legend = c("Setosa", "Versicolor", "Virginica"), 
+       fill = c("black", "red", "green"), title = "Especie")
+```
 
 
 6. Investiga la distribución de valoraciones por día de la semana y por mes.¿Qué meses y días de la semana
