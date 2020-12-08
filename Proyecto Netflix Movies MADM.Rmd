@@ -104,7 +104,7 @@ The first line of each file contains the movie id followed by a colon. Each subs
 ```{r, warning=FALSE, message=FALSE}
 rm(titles)
 #algunas peliculas tienen una coma en su nombre, así que cargamos primero todo como una única columna, para luego dividirlo en 3, y hacer un merge la parte de los títulos despues de la coma
-titles = read_table(here("Data",'movie_titles.csv'), col_names=F) %>%
+titles = read_table(here("Data",'movie_titles_raw.csv'), col_names=F) %>%
   separate(col = 1, into = c("MovieID", "Release_Year", "Title"), sep = ",", extra = "merge")
 ```
 
