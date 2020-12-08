@@ -421,8 +421,14 @@ summary {
 <ul>
 <li><a href="#objetivo"><span class="toc-section-number">1</span> Objetivo</a></li>
 <li><a href="#data-wrangle"><span class="toc-section-number">2</span> Data Wrangle</a><ul>
-<li><a href="#importación-de-datos"><span class="toc-section-number">2.1</span> Importación de datos</a></li>
-<li><a href="#limpieza-de-los-datos"><span class="toc-section-number">2.2</span> Limpieza de los datos</a></li>
+<li><a href="#importación-de-datos"><span class="toc-section-number">2.1</span> Importación de datos</a><ul>
+<li><a href="#importación-datos-puntuaciones-películas"><span class="toc-section-number">2.1.1</span> Importación datos puntuaciones películas</a></li>
+<li><a href="#importación-datos-información-sobre-las-películas"><span class="toc-section-number">2.1.2</span> Importación datos información sobre las películas</a></li>
+</ul></li>
+<li><a href="#limpieza-de-los-datos"><span class="toc-section-number">2.2</span> Limpieza de los datos</a><ul>
+<li><a href="#limpieza-datos-puntuaciones-películas"><span class="toc-section-number">2.2.1</span> Limpieza datos puntuaciones películas</a></li>
+<li><a href="#limpieza-datos-títulos-películas"><span class="toc-section-number">2.2.2</span> Limpieza datos títulos películas</a></li>
+</ul></li>
 </ul></li>
 <li><a href="#estadística-descriptiva"><span class="toc-section-number">3</span> Estadística Descriptiva</a></li>
 <li><a href="#sistema-de-recomendación-similaridad-opcional"><span class="toc-section-number">4</span> Sistema de Recomendación / Similaridad (opcional)</a></li>
@@ -436,6 +442,8 @@ summary {
 <h1><span class="header-section-number">2</span> Data Wrangle</h1>
 <div id="importación-de-datos" class="section level2">
 <h2><span class="header-section-number">2.1</span> Importación de datos</h2>
+<div id="importación-datos-puntuaciones-películas" class="section level3">
+<h3><span class="header-section-number">2.1.1</span> Importación datos puntuaciones películas</h3>
 <p><strong>Info de los archivos “combined_data_.txt”</strong> The first line of each file contains the movie id followed by a colon. Each subsequent line in the file corresponds to a rating from a customer and its date in the following format:</p>
 <p>CustomerID,Rating,Date</p>
 <ul>
@@ -446,37 +454,20 @@ summary {
 </ul>
 <p><strong>Carga archivo puntuaciones películas</strong></p>
 <pre class="r"><code>aux = read_tsv(here(&quot;Raw data&quot;, &quot;combined_data_1.txt&quot;), col_names = FALSE, n_max = 30000) #lectura de las primeras</code></pre>
-<pre><code>## 
-## -- Column specification --------------------------------------------------------
-## cols(
-##   X1 = col_character()
-## )</code></pre>
+</div>
+<div id="importación-datos-información-sobre-las-películas" class="section level3">
+<h3><span class="header-section-number">2.1.2</span> Importación datos información sobre las películas</h3>
 <p><strong>Carga archivo titulos películas</strong></p>
-<pre class="r"><code>rm(titles,tt)</code></pre>
-<pre><code>## Warning in rm(titles, tt): object &#39;titles&#39; not found</code></pre>
-<pre><code>## Warning in rm(titles, tt): object &#39;tt&#39; not found</code></pre>
-<pre class="r"><code>titles = read_csv(here(&quot;Raw data&quot;,&#39;movie_titles.csv&#39;), col_names=F)</code></pre>
-<pre><code>## 
-## -- Column specification --------------------------------------------------------
-## cols(
-##   X1 = col_character(),
-##   X2 = col_character(),
-##   X3 = col_character()
-## )</code></pre>
-<pre><code>## Warning: 343 parsing failures.
-## row col  expected    actual                                                                                          file
-##  73  -- 3 columns 4 columns &#39;C:/Developer MADM/Cursos MADM Github/proyecto-netflix-movies-madm/Raw data/movie_titles.csv&#39;
-## 265  -- 3 columns 5 columns &#39;C:/Developer MADM/Cursos MADM Github/proyecto-netflix-movies-madm/Raw data/movie_titles.csv&#39;
-## 351  -- 3 columns 4 columns &#39;C:/Developer MADM/Cursos MADM Github/proyecto-netflix-movies-madm/Raw data/movie_titles.csv&#39;
-## 367  -- 3 columns 4 columns &#39;C:/Developer MADM/Cursos MADM Github/proyecto-netflix-movies-madm/Raw data/movie_titles.csv&#39;
-## 395  -- 3 columns 4 columns &#39;C:/Developer MADM/Cursos MADM Github/proyecto-netflix-movies-madm/Raw data/movie_titles.csv&#39;
-## ... ... ......... ......... .............................................................................................
-## See problems(...) for more details.</code></pre>
-<pre class="r"><code>titles &lt;- tibble(titles)</code></pre>
+<pre class="r"><code>rm(titles,tt)
+#algunas peliculas tienen una coma en su nombre, así que cargamos primero todo como una única columna, para luego dividirlo en 3, y hacer un merge la parte de los títulos despues de la coma
+titles = read_table(here(&quot;Raw data&quot;,&#39;movie_titles.csv&#39;)) %&gt;%
+  separate(col = 1, into = c(&quot;MovieID&quot;, &quot;Release_Year&quot;, &quot;Title&quot;), sep = &quot;,&quot;, extra = &quot;merge&quot;)</code></pre>
+</div>
 </div>
 <div id="limpieza-de-los-datos" class="section level2">
 <h2><span class="header-section-number">2.2</span> Limpieza de los datos</h2>
-<p>Limpieza datos puntuaciones películas</p>
+<div id="limpieza-datos-puntuaciones-películas" class="section level3">
+<h3><span class="header-section-number">2.2.1</span> Limpieza datos puntuaciones películas</h3>
 <pre class="r"><code>aux %&lt;&gt;% mutate(fila=row_number()) #añadir columna con número de fila
 filas = grep(&quot;:&quot;,aux$X1) #buscar filas con &quot;:&quot;, filas comienzo nueva pelicula
 filas_ID = aux %&gt;% filter( fila %in% filas ) 
@@ -540,27 +531,20 @@ summary(scores)</code></pre>
 ##   547   145  2012   142  1140  1019    93 14910    95   249   198   546   125 
 ##    14    15 
 ##   118   290</code></pre>
-<p>Limpieza datos títulos películas</p>
+</div>
+<div id="limpieza-datos-títulos-películas" class="section level3">
+<h3><span class="header-section-number">2.2.2</span> Limpieza datos títulos películas</h3>
 <pre class="r"><code>head(titles)</code></pre>
 <pre><code>## # A tibble: 6 x 3
-##   X1      X2          X3                          
-##   &lt;chr&gt;   &lt;chr&gt;       &lt;chr&gt;                       
-## 1 MovieID ReleaseDate MovieTitle                  
-## 2 1       2003        Dinosaur Planet             
-## 3 2       2004        Isle of Man TT 2004 Review  
-## 4 3       1997        Character                   
-## 5 4       1994        Paula Abdul&#39;s Get Up &amp; Dance
-## 6 5       2004        The Rise and Fall of ECW</code></pre>
-<pre class="r"><code>titles %&lt;&gt;% rename(MovieID = X1, Release_Year = X2, Title = X3)
-titles  %&lt;&gt;% mutate(across(c(MovieID:Release_Year), as.integer))</code></pre>
-<pre><code>## Warning: Problem with `mutate()` input `..1`.
-## i NAs introduced by coercion
-## i Input `..1` is `across(c(MovieID:Release_Year), as.integer)`.</code></pre>
-<pre><code>## Warning in fn(col, ...): NAs introduced by coercion</code></pre>
-<pre><code>## Warning: Problem with `mutate()` input `..1`.
-## i NAs introduced by coercion
-## i Input `..1` is `across(c(MovieID:Release_Year), as.integer)`.</code></pre>
-<pre><code>## Warning in fn(col, ...): NAs introduced by coercion</code></pre>
+##   MovieID Release_Year Title                       
+##   &lt;chr&gt;   &lt;chr&gt;        &lt;chr&gt;                       
+## 1 1       2003         Dinosaur Planet             
+## 2 2       2004         Isle of Man TT 2004 Review  
+## 3 3       1997         Character                   
+## 4 4       1994         Paula Abdul&#39;s Get Up &amp; Dance
+## 5 5       2004         The Rise and Fall of ECW    
+## 6 6       1997         Sick</code></pre>
+<pre class="r"><code>titles  %&lt;&gt;% mutate(across(c(MovieID:Release_Year), as.integer))</code></pre>
 <p>**Left join de puntuaciones películas con los títulos</p>
 <p>Hacemos un left join con ‘titles’ para añadir a la tabla ‘scores’ los títulos de cada película y el año en que se publicaron</p>
 <ul>
@@ -601,6 +585,7 @@ summary(scores); head(scores)</code></pre>
 ## 6       1     893988 2005-11-17  2005    11    17     3         2003 Dinosaur P~</code></pre>
 </div>
 </div>
+</div>
 <div id="estadística-descriptiva" class="section level1">
 <h1><span class="header-section-number">3</span> Estadística Descriptiva</h1>
 <ol style="list-style-type: decimal">
@@ -628,48 +613,207 @@ summary(scores); head(scores)</code></pre>
   group_by(MovieID) %&gt;%
   summarise(Mean_Score = mean(Score), n = n()) %&gt;%
   left_join(titles, by = &quot;MovieID&quot;) %&gt;%
-  arrange(desc(Mean_Score))</code></pre>
-<pre><code>## `summarise()` ungrouping output (override with `.groups` argument)</code></pre>
-<pre class="r"><code>movie_score_avg</code></pre>
-<pre><code>## # A tibble: 15 x 5
-##    MovieID Mean_Score     n Release_Year Title                                  
-##      &lt;int&gt;      &lt;dbl&gt; &lt;int&gt;        &lt;int&gt; &lt;chr&gt;                                  
-##  1      13       4.55   125         2003 Lord of the Rings: The Return of the K~
-##  2       5       3.92  1140         2004 The Rise and Fall of ECW               
-##  3       1       3.75   547         2003 Dinosaur Planet                        
-##  4       3       3.64  2012         1997 Character                              
-##  5       2       3.56   145         2004 Isle of Man TT 2004 Review             
-##  6      12       3.42   546         1947 My Favorite Brunette                   
-##  7      15       3.29   290         1988 Neil Diamond: Greatest Hits Live       
-##  8       8       3.19 14910         2004 What the #$*! Do We Know!?             
-##  9      10       3.18   249         2001 Fighter                                
-## 10       6       3.08  1019         1997 Sick                                   
-## 11      11       3.03   198         1999 Full Frame: Documentary Shorts         
-## 12      14       3.03   118         1982 Nature: Antarctica                     
-## 13       4       2.74   142         1994 Paula Abdul&#39;s Get Up &amp; Dance           
-## 14       9       2.62    95         1991 Class of Nuke &#39;Em High 2               
-## 15       7       2.13    93         1992 8 Man</code></pre>
+  arrange(desc(Mean_Score))
+
+kable(movie_score_avg)</code></pre>
+<table>
+<colgroup>
+<col width="7%"></col>
+<col width="9%"></col>
+<col width="5%"></col>
+<col width="11%"></col>
+<col width="66%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th align="right">MovieID</th>
+<th align="right">Mean_Score</th>
+<th align="right">n</th>
+<th align="right">Release_Year</th>
+<th align="left">Title</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">13</td>
+<td align="right">4.552000</td>
+<td align="right">125</td>
+<td align="right">2003</td>
+<td align="left">Lord of the Rings: The Return of the King: Extended Edition: Bonus Material</td>
+</tr>
+<tr class="even">
+<td align="right">5</td>
+<td align="right">3.919298</td>
+<td align="right">1140</td>
+<td align="right">2004</td>
+<td align="left">The Rise and Fall of ECW</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">3.749543</td>
+<td align="right">547</td>
+<td align="right">2003</td>
+<td align="left">Dinosaur Planet</td>
+</tr>
+<tr class="even">
+<td align="right">3</td>
+<td align="right">3.641153</td>
+<td align="right">2012</td>
+<td align="right">1997</td>
+<td align="left">Character</td>
+</tr>
+<tr class="odd">
+<td align="right">2</td>
+<td align="right">3.558621</td>
+<td align="right">145</td>
+<td align="right">2004</td>
+<td align="left">Isle of Man TT 2004 Review</td>
+</tr>
+<tr class="even">
+<td align="right">12</td>
+<td align="right">3.417582</td>
+<td align="right">546</td>
+<td align="right">1947</td>
+<td align="left">My Favorite Brunette</td>
+</tr>
+<tr class="odd">
+<td align="right">15</td>
+<td align="right">3.286207</td>
+<td align="right">290</td>
+<td align="right">1988</td>
+<td align="left">Neil Diamond: Greatest Hits Live</td>
+</tr>
+<tr class="even">
+<td align="right">8</td>
+<td align="right">3.189805</td>
+<td align="right">14910</td>
+<td align="right">2004</td>
+<td align="left">What the #$*! Do We Know!?</td>
+</tr>
+<tr class="odd">
+<td align="right">10</td>
+<td align="right">3.180723</td>
+<td align="right">249</td>
+<td align="right">2001</td>
+<td align="left">Fighter</td>
+</tr>
+<tr class="even">
+<td align="right">6</td>
+<td align="right">3.084396</td>
+<td align="right">1019</td>
+<td align="right">1997</td>
+<td align="left">Sick</td>
+</tr>
+<tr class="odd">
+<td align="right">11</td>
+<td align="right">3.030303</td>
+<td align="right">198</td>
+<td align="right">1999</td>
+<td align="left">Full Frame: Documentary Shorts</td>
+</tr>
+<tr class="even">
+<td align="right">14</td>
+<td align="right">3.025424</td>
+<td align="right">118</td>
+<td align="right">1982</td>
+<td align="left">Nature: Antarctica</td>
+</tr>
+<tr class="odd">
+<td align="right">4</td>
+<td align="right">2.739437</td>
+<td align="right">142</td>
+<td align="right">1994</td>
+<td align="left">Paula Abdul’s Get Up &amp; Dance</td>
+</tr>
+<tr class="even">
+<td align="right">9</td>
+<td align="right">2.621053</td>
+<td align="right">95</td>
+<td align="right">1991</td>
+<td align="left">Class of Nuke ’Em High 2</td>
+</tr>
+<tr class="odd">
+<td align="right">7</td>
+<td align="right">2.129032</td>
+<td align="right">93</td>
+<td align="right">1992</td>
+<td align="left">8 Man</td>
+</tr>
+</tbody>
+</table>
 <p>Valoración media por ‘Release_Year’, de mayor a menor:</p>
 <pre class="r"><code>release_year_score_avg &lt;- scores %&gt;%
   group_by(Release_Year) %&gt;%
   summarise(Mean_Score = mean(Score), n = n()) %&gt;%
-  arrange(desc(Mean_Score))</code></pre>
-<pre><code>## `summarise()` ungrouping output (override with `.groups` argument)</code></pre>
-<pre class="r"><code>release_year_score_avg</code></pre>
-<pre><code>## # A tibble: 11 x 3
-##    Release_Year Mean_Score     n
-##           &lt;int&gt;      &lt;dbl&gt; &lt;int&gt;
-##  1         2003       3.90   672
-##  2         1997       3.45  3031
-##  3         1947       3.42   546
-##  4         1988       3.29   290
-##  5         2004       3.24 16195
-##  6         2001       3.18   249
-##  7         1999       3.03   198
-##  8         1982       3.03   118
-##  9         1994       2.74   142
-## 10         1991       2.62    95
-## 11         1992       2.13    93</code></pre>
+  arrange(desc(Mean_Score))
+
+kable(release_year_score_avg)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">Release_Year</th>
+<th align="right">Mean_Score</th>
+<th align="right">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">2003</td>
+<td align="right">3.898810</td>
+<td align="right">672</td>
+</tr>
+<tr class="even">
+<td align="right">1997</td>
+<td align="right">3.453976</td>
+<td align="right">3031</td>
+</tr>
+<tr class="odd">
+<td align="right">1947</td>
+<td align="right">3.417582</td>
+<td align="right">546</td>
+</tr>
+<tr class="even">
+<td align="right">1988</td>
+<td align="right">3.286207</td>
+<td align="right">290</td>
+</tr>
+<tr class="odd">
+<td align="right">2004</td>
+<td align="right">3.244458</td>
+<td align="right">16195</td>
+</tr>
+<tr class="even">
+<td align="right">2001</td>
+<td align="right">3.180723</td>
+<td align="right">249</td>
+</tr>
+<tr class="odd">
+<td align="right">1999</td>
+<td align="right">3.030303</td>
+<td align="right">198</td>
+</tr>
+<tr class="even">
+<td align="right">1982</td>
+<td align="right">3.025424</td>
+<td align="right">118</td>
+</tr>
+<tr class="odd">
+<td align="right">1994</td>
+<td align="right">2.739437</td>
+<td align="right">142</td>
+</tr>
+<tr class="even">
+<td align="right">1991</td>
+<td align="right">2.621053</td>
+<td align="right">95</td>
+</tr>
+<tr class="odd">
+<td align="right">1992</td>
+<td align="right">2.129032</td>
+<td align="right">93</td>
+</tr>
+</tbody>
+</table>
 <p>Valoración media por día de la semana, de mayor a menor:</p>
 <pre class="r"><code>scores_day_week &lt;- scores %&gt;% mutate(Day_Week = weekdays(Date))
 scores_day_week %&lt;&gt;% mutate(Is_Weekend = isWeekend(Date))
@@ -677,30 +821,82 @@ scores_day_week %&lt;&gt;% mutate(Is_Weekend = isWeekend(Date))
 day_week_score_avg &lt;- scores_day_week %&gt;%
   group_by(Day_Week) %&gt;%
   summarise(Mean_Score = mean(Score), n = n()) %&gt;%
-  arrange(desc(Mean_Score))</code></pre>
-<pre><code>## `summarise()` ungrouping output (override with `.groups` argument)</code></pre>
-<pre class="r"><code>day_week_score_avg</code></pre>
-<pre><code>## # A tibble: 7 x 3
-##   Day_Week  Mean_Score     n
-##   &lt;chr&gt;          &lt;dbl&gt; &lt;int&gt;
-## 1 Friday          3.32  2767
-## 2 Thursday        3.31  2974
-## 3 Saturday        3.31  1851
-## 4 Tuesday         3.29  4094
-## 5 Monday          3.29  4230
-## 6 Wednesday       3.26  3537
-## 7 Sunday          3.22  2176</code></pre>
+  arrange(desc(Mean_Score))
+
+kable(day_week_score_avg)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Day_Week</th>
+<th align="right">Mean_Score</th>
+<th align="right">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Friday</td>
+<td align="right">3.319118</td>
+<td align="right">2767</td>
+</tr>
+<tr class="even">
+<td align="left">Thursday</td>
+<td align="right">3.313383</td>
+<td align="right">2974</td>
+</tr>
+<tr class="odd">
+<td align="left">Saturday</td>
+<td align="right">3.307942</td>
+<td align="right">1851</td>
+</tr>
+<tr class="even">
+<td align="left">Tuesday</td>
+<td align="right">3.287494</td>
+<td align="right">4094</td>
+</tr>
+<tr class="odd">
+<td align="left">Monday</td>
+<td align="right">3.286998</td>
+<td align="right">4230</td>
+</tr>
+<tr class="even">
+<td align="left">Wednesday</td>
+<td align="right">3.255584</td>
+<td align="right">3537</td>
+</tr>
+<tr class="odd">
+<td align="left">Sunday</td>
+<td align="right">3.215993</td>
+<td align="right">2176</td>
+</tr>
+</tbody>
+</table>
 <p>Valoración media entre semana / fin de semana:</p>
 <pre class="r"><code>weekend_weekday_score_avg &lt;- scores_day_week %&gt;%
   group_by(Is_Weekend) %&gt;%
-  summarise(Mean_Score = mean(Score), n = n())</code></pre>
-<pre><code>## `summarise()` ungrouping output (override with `.groups` argument)</code></pre>
-<pre class="r"><code>weekend_weekday_score_avg</code></pre>
-<pre><code>## # A tibble: 2 x 3
-##   Is_Weekend Mean_Score     n
-##   &lt;lgl&gt;           &lt;dbl&gt; &lt;int&gt;
-## 1 FALSE            3.29 17602
-## 2 TRUE             3.26  4027</code></pre>
+  summarise(Mean_Score = mean(Score), n = n())
+
+kable(weekend_weekday_score_avg)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Is_Weekend</th>
+<th align="right">Mean_Score</th>
+<th align="right">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">FALSE</td>
+<td align="right">3.290308</td>
+<td align="right">17602</td>
+</tr>
+<tr class="even">
+<td align="left">TRUE</td>
+<td align="right">3.258257</td>
+<td align="right">4027</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>n_scores_weekend = weekend_weekday_score_avg  %&gt;% filter(Is_Weekend == TRUE) %&gt;% select(n)
 n_scores = sum(weekend_weekday_score_avg$n)
 n_scores_weekend_weekday_ratio = n_scores_weekend / n_scores #el 18% de las valoraciones son en fin de semana, que es menos que el 28% de días que son fin de semana</code></pre>
