@@ -265,12 +265,38 @@ movie_score_avg <- scores %>%
   left_join(titles, by = "MovieID") %>%
   arrange(desc(Mean_Score))
 
-kable(head(movie_score_avg))
-  
+kable((movie_score_avg))
+
 ```
 
 5. De las cinco películas con más número total de valoraciones, compara sus estadísticos y distribuciones
 (histogramas, boxplot, violin plot,. . . )
+
+```{r}
+sample = head(movie_score_avg[order(movie_score_avg$n, decreasing = TRUE),],5)
+sample
+```
+###Histograma
+```{r, para n}
+par(bg="grey98", mar=c(3,3,3,3), mfcol=c(1,2))
+#Primer gráfico
+hist(x = sample$n, main = "Histograma de número 
+     total de valoraciones", 
+     xlab = "Valoraciones", ylab = "Frecuencia", col = 'chocolate')
+#Segundo gráfico
+hist(x = sample$Mean_Score, main = "Histograma de 
+    puntuación media", 
+     xlab = "Valoraciones", ylab = "Frecuencia", col = 'chocolate1')
+```
+
+###Plot
+```{r}
+#Si damos como argumentos la variable Release_Year y la variable lMean_Score, obtenemos una tabla de contingencia, que asignaremos al objeto tab_sample.
+tab_sample <- table(sample$Release_Year, sample$Mean_Score)
+prop.table(tab_sample, margin = 1)
+```
+
+
 
 6. Investiga la distribución de valoraciones por día de la semana y por mes.¿Qué meses y días de la semana
 se valoran más películas en netflix?
@@ -301,6 +327,11 @@ se valoran más películas en netflix?
 
 
 
+
+
+```{r, para Release_Year}
+plot(sample$Release_Year, sample$Mean_Score)
+```
 
 
 # Sistema de Recomendación / Similaridad (opcional)
