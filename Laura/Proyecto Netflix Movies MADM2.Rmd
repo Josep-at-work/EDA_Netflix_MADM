@@ -26,7 +26,7 @@ library(here) #permite ejecutar este rmd desde cualquier carpeta
 library(timeDate)
 library(magrittr) #permite hacer pipes en ambos sentidos
 
-# rm(aux, scores, titles, tt) #se eliminan las tablas por si las tenemos ya en el environment
+# rm(aux, scores, titles) #se eliminan las variables por si las tenemos ya en el environment
 rm(list=ls())
 cat("\014")
 ```
@@ -145,23 +145,20 @@ titles = read_table(here("Data",'movie_titles_raw.csv'), col_names=F) %>%
 <!-- write_path = here("Data") -->
 <!-- write_csv(scores, "nuestras_pelis.csv", path = write_path) -->
 
-<!-- ``` -->
-
 ```{r message=FALSE, warning=FALSE}
 scores = read_csv(here("Data","nuestras_pelis.csv"))
-#summary(scores)
-```
 
-### Cambiamos los tipos de variable necesarios:
-```{r}
+# Cambiamos los tipos de variable necesarios
 scores %<>% mutate(across(c(MovieID:CustomerID, Year:Score), as.integer))
 scores %<>% mutate(Date = as.Date(Date))
+summary(scores)
 ```
+
 
 ### Limpieza datos títulos películas
 ```{r, warning=FALSE, message=FALSE}
-titles  %<>% mutate(across(c(MovieID:Release_Year), as.integer))
 head(titles)
+titles  %<>% mutate(across(c(MovieID:Release_Year), as.integer))
 ```
 
 **Left join de puntuaciones películas con los títulos
@@ -196,10 +193,20 @@ table(head(scores$MovieID)) # frecuencia title
 ```{r}
 glimpse(scores)
 ```
-#### Variables tipo _int_
-- CustomerID, MovieID, Year, Month, Day, Score    
+### Variables tipo _int_: MovieID, CustomerID, Score, Release_Year
+- _CustomerID_: _<int>_ Contiene un número entero, estos son objetos que contienen un único campo, un identificado ID para cada cliente, no queremos duplicados. 
+- _MovieID_: _<int>_ Contiene un número entero, estos son objetos que contienen un único campo, un identificado ID para cada película, no queremos duplicados. Un integer es inmutable.
+- _Release_Year_: _<int>_ No existen años con decimales, por lo tanto utilizar variables para datos enteros seria suficiente.
+Movie_title: chr. Utilizamos el tipo carácter porque nos interesan objetos que representan un conjunto de letras.
+- _Score_: _<int>_ Las puntuaciones son números enteros del 1 al 5. Las películas no aceptan decimales como puntuación.
 
-2. Estudia la distribución del numero de películas estrenadas por año. Realiza un gráfico de muestre esta
+### Variables tipo _date_: Date
+- _Date_ : _<date>_ esta variable incluye datos de tipo fecha (YY/MM/DD) por ello lo más adecuado es tratarlo como una variable de este tipo. Gracias a esto, podemos aplicar paquetes como _lubridate_ para manipular fechas.
+
+### Variables tipo _chr_: Title
+- _Title_: Utilizamos el tipo carácter porque nos interesan objetos que representan un conjunto de letras.
+
+2. Estudia la distribución del número de películas estrenadas por año. Realiza un gráfico de muestre esta
 distribución haciendo los ajustes necesarios (agrupaciones, cambios de escala, transformaciones. . . )
 
 Valoración media por 'Release_Year', de mayor a menor:
