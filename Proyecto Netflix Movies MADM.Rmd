@@ -50,20 +50,59 @@ The first line of each file contains the movie id followed by a colon. Each subs
   * Ratings are on a five star (integral) scale from 1 to 5.
   * Dates have the format YYYY-MM-DD.  
   
-```{r, include=FALSE}
+  
+<!-- **Selección de 250 películas de manera aleatoria** -->
 
-```
+<!-- ```{r, warning=FALSE, message=FALSE} -->
+<!-- filas_ID_combined_all = read.csv(here("Raw data","filas_ID_combined_all.txt")) -->
+<!-- glimpse(filas_ID_combined_all) -->
+<!-- table(filas_ID_combined_all$data) -->
+<!-- set.seed(080910) -->
+<!-- # runif(4) -->
+<!-- muestra_grupo = sample(1:12000, 250, replace=F) -->
+<!-- head(muestra_grupo) -->
 
 
-**Carga archivo puntuaciones películas**
-```{r, warning=FALSE, message=FALSE}
-aux = read_csv(here("Data", "nuestras_pelis.csv"), col_names = T)
-```
+<!-- pelis <- filas_ID_combined_all[as.vector(muestra_grupo),] -->
+<!-- attach(pelis) -->
+
+<!-- data1 = read_tsv(here("Raw data","combined_data_1.txt"),col_names = FALSE) -->
+<!-- data2 = read_tsv(here("Raw data","combined_data_2.txt"),col_names = FALSE) -->
+<!-- data3 = read_tsv(here("Raw data","combined_data_3.txt"),col_names = FALSE) -->
+<!-- data4 = read_tsv(here("Raw data","combined_data_4.txt"),col_names = FALSE) -->
+
+<!-- scores = tibble() -->
+<!-- for(i in 1:nrow(pelis)){ -->
+<!--   if (data[i]==1){ -->
+<!--     scores = rbind(scores,data1[fila[i]:fila_final[i],]) -->
+<!--   } -->
+<!--   if (data[i]==2){ -->
+<!--     scores = rbind(scores,data2[fila[i]:fila_final[i],]) -->
+<!--   } -->
+<!--   if (data[i]==3){ -->
+<!--     scores = rbind(scores,data3[fila[i]:fila_final[i],]) -->
+<!--   } -->
+<!--   else { -->
+<!--     scores = rbind(scores,data4[fila[i]:fila_final[i],]) -->
+<!--   } -->
+<!-- }   -->
+<!-- scores -->
+<!-- write_csv(scores,"nuestras_pelis_raw.csv") -->
+
+<!-- ``` -->
+
+
+<!-- **Carga archivo puntuaciones de nuestras 250 películas** -->
+<!-- ```{r, warning=FALSE, message=FALSE} -->
+<!-- aux = read_csv(here("Data", "nuestras_pelis_raw.csv"), col_names = T) -->
+<!-- ``` -->
+
+
 ### Importación datos información sobre las películas
 
 **Carga archivo titulos películas**
 ```{r, warning=FALSE, message=FALSE}
-rm(titles,tt)
+rm(titles)
 #algunas peliculas tienen una coma en su nombre, así que cargamos primero todo como una única columna, para luego dividirlo en 3, y hacer un merge la parte de los títulos despues de la coma
 titles = read_table(here("Data",'movie_titles.csv'), col_names=F) %>%
   separate(col = 1, into = c("MovieID", "Release_Year", "Title"), sep = ",", extra = "merge")
@@ -73,48 +112,48 @@ titles = read_table(here("Data",'movie_titles.csv'), col_names=F) %>%
 
 ### Limpieza datos puntuaciones películas
 
-```{r, warning=FALSE, message=FALSE}
-aux %<>% mutate(fila=row_number()) #añadir columna con número de fila
-filas = grep(":",aux$X1) #buscar filas con ":", filas comienzo nueva pelicula
-filas_ID = aux %>% filter( fila %in% filas ) 
-IDs = unique(filas_ID$X1)
-reps = diff(c(filas_ID$fila,max(aux$fila)+1))
-length(reps)
-dim(aux)
-sum(reps)
-scores = aux %>% mutate(ID1=rep(filas_ID$X1,times=reps)) %>% filter(!(fila %in% filas) )
 
-#ahora borramos los datos de la última película por si se han cortado a medias
-scores %<>% filter( scores$fila < filas_ID$fila[length(filas_ID$fila)-1] )
+<!-- ```{r message=FALSE, warning=FALSE} -->
+<!-- aux %<>% mutate(fila=row_number()) #añadir columna con número de fila -->
+<!-- filas = grep(":",aux$X1) #buscar filas con ":", filas comienzo nueva pelicula -->
+<!-- filas_ID = aux %>% filter( fila %in% filas ) -->
+<!-- IDs = unique(filas_ID$X1) -->
+<!-- reps = diff(c(filas_ID$fila,max(aux$fila)+1)) -->
+<!-- length(reps) -->
+<!-- dim(aux)   -->
+<!-- sum(reps) -->
+<!-- scores = aux %>% mutate(ID1=rep(filas_ID$X1,times=reps)) %>% filter(!(fila %in% filas) ) -->
 
-# Ahora arregloamos la variable X1, y separamos la fecha en año, mes y día
-scores %<>% separate(X1,into = c("CustomerID","Score","Date"), sep = ",")
-scores %<>% mutate(Date_copy = Date)  %>% separate(Date_copy, into = c("Year", "Month", "Day"), sep = "-")
+<!-- # Ahora arregloamos la variable X1, y separamos la fecha en año, mes y día -->
+<!-- scores %<>% separate(X1,into = c("CustomerID","Score","Date"), sep = ",") -->
+<!-- scores %<>% mutate(Date_copy = Date)  %>% separate(Date_copy, into = c("Year", "Month", "Day"), sep = "-") -->
 
-#Renombramos y reordenamos las variables
-scores %<>% rename(MovieID = ID1)
-scores <- select(scores, -fila) # eliminamos la columna fila
-scores %<>% relocate(MovieID, CustomerID, Date, Year, Month, Day, Score)
+<!-- #Renombramos y reordenamos las variables -->
+<!-- scores %<>% rename(MovieID = ID1) -->
+<!-- scores <- select(scores, -fila) # eliminamos la columna fila -->
+<!-- scores %<>% relocate(MovieID, CustomerID, Date, Year, Month, Day, Score) -->
 
-#Quitamos los ":" de el campo MovieID
-scores$MovieID <- scores$MovieID %>% str_replace(":", "")
+<!-- #Quitamos los ":" de el campo MovieID -->
+<!-- scores$MovieID <- scores$MovieID %>% str_replace(":", "") -->
 
-# Cambiamos los tipos de variable necesarios
+<!-- # Cambiamos los tipos de variable necesarios -->
 
-scores %<>% mutate(across(c(MovieID:CustomerID, Year:Score), as.integer))
-scores %<>% mutate(Date = as.Date(Date))
+<!-- scores %<>% mutate(across(c(MovieID:CustomerID, Year:Score), as.integer)) -->
+<!-- scores %<>% mutate(Date = as.Date(Date)) -->
+
+<!-- # Exportamos el archivo csv limpio para trabajar con el a partir de ahora -->
+<!-- write_path = here("Data") -->
+<!-- write_csv(scores, "nuestras_pelis.csv", path = write_path) -->
+
+<!-- ``` -->
 
 
+```{r message=FALSE, warning=FALSE}
+scores = read_csv(here("Data","nuestras_pelis.csv"))
 summary(scores)
 ```
-Vemos que tenemos información de la peliculas 1 a la 15, y las puntuaciones se hicieron entre el 2000 y el 2005 (mayoritariamente en 2005). Distribución de los meses y dias en que se puntuo es uniforme. 
 
-Veamos más informacion sobre los datos:
-```{r, warning=FALSE, message=FALSE}
-length(unique(scores$CustomerID)) #20537 usuarios distintos
-table(scores$Score) # frecuencia puntuaciones
-table(scores$MovieID) # frecuencia title
-```
+
 ### Limpieza datos títulos películas
 ```{r, warning=FALSE, message=FALSE}
 head(titles)
@@ -138,6 +177,15 @@ kable(head(scores))
 
 # Estadística Descriptiva
 
+Vemos que tenemos información de la peliculas 1 a la 15, y las puntuaciones se hicieron entre el 2000 y el 2005 (mayoritariamente en 2005). Distribución de los meses y dias en que se puntuo es uniforme. 
+
+Veamos más informacion sobre los datos:
+```{r, warning=FALSE, message=FALSE}
+length(unique(scores$CustomerID)) #20537 usuarios distintos
+table(scores$Score) # frecuencia puntuaciones
+table(head(scores$MovieID)) # frecuencia title
+```
+
 
 1. Justifica para cada una de las variables de la tabla anterior el tipo de dato que mejor se ajusta a cada una de ellas: numérico, ordinal, categórico. . . .
 
@@ -156,7 +204,7 @@ release_year_score_avg <- scores %>%
   summarise(Mean_Score = mean(Score), n = n()) %>%
   arrange(desc(Mean_Score))
 
-kable(release_year_score_avg)
+kable(head(release_year_score_avg))
 ```
 
 3. Investiga la librería lubridate (o la que consideréis para manipulación de datos) y utilízala para
@@ -166,6 +214,7 @@ day_of_week.
 Valoración media por día de la semana, de mayor a menor:
 
 ```{r, warning=FALSE, message=FALSE}
+
 scores_day_week <- scores %>% mutate(Day_Week = weekdays(Date))
 scores_day_week %<>% mutate(Is_Weekend = isWeekend(Date))
 
@@ -203,7 +252,7 @@ movie_score_avg <- scores %>%
   left_join(titles, by = "MovieID") %>%
   arrange(desc(Mean_Score))
 
-kable(movie_score_avg)
+kable(head(movie_score_avg))
   
 ```
 
