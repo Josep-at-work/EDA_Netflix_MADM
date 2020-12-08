@@ -417,36 +417,25 @@ summary {
 
 </div>
 
+<div id="TOC">
+<ul>
+<li><a href="#objetivo"><span class="toc-section-number">1</span> Objetivo</a></li>
+<li><a href="#data-wrangle"><span class="toc-section-number">2</span> Data Wrangle</a><ul>
+<li><a href="#importación-de-datos"><span class="toc-section-number">2.1</span> Importación de datos</a></li>
+<li><a href="#limpieza-de-los-datos"><span class="toc-section-number">2.2</span> Limpieza de los datos</a></li>
+</ul></li>
+<li><a href="#estadística-descriptiva"><span class="toc-section-number">3</span> Estadística Descriptiva</a></li>
+<li><a href="#sistema-de-recomendación-similaridad-opcional"><span class="toc-section-number">4</span> Sistema de Recomendación / Similaridad (opcional)</a></li>
+</ul>
+</div>
 
-<div id="tabla-de-contenidos" class="section level3">
-<h3>Tabla de Contenidos</h3>
-<ol style="list-style-type: decimal">
-<li><p>Objetivo</p></li>
-<li><p>Data Wrangle</p>
-<ol style="list-style-type: decimal">
-<li>Importación de datos</li>
-<li>Limpieza de datos</li>
-</ol></li>
-<li><p>Estadística Descriptiva</p>
-<ol style="list-style-type: decimal">
-<li>Puntuaciones por fecha</li>
-<li>Puntuaciones por película</li>
-<li>Puntuaciones por usuario</li>
-<li>Número de puntuaciones por película, usuario y año lanzamiento</li>
-<li>Distribucion de los scores (boxplot,barplot)</li>
-<li>Series temporales de puntuaciones</li>
-<li>Distribución de cuantos usuarios evaluan cuantas pelis totales y diferentes</li>
-</ol></li>
-<li><p>Sistema de Recomendación / Similaridad (opcional)</p></li>
-</ol>
+<div id="objetivo" class="section level1">
+<h1><span class="header-section-number">1</span> Objetivo</h1>
 </div>
-<div id="objetivo" class="section level2">
-<h2>1. Objetivo</h2>
-</div>
-<div id="data-wrangle" class="section level2">
-<h2>2. Data Wrangle</h2>
-<div id="importación-de-datos" class="section level3">
-<h3>2.1 Importación de datos</h3>
+<div id="data-wrangle" class="section level1">
+<h1><span class="header-section-number">2</span> Data Wrangle</h1>
+<div id="importación-de-datos" class="section level2">
+<h2><span class="header-section-number">2.1</span> Importación de datos</h2>
 <p><strong>Info de los archivos “combined_data_.txt”</strong> The first line of each file contains the movie id followed by a colon. Each subsequent line in the file corresponds to a rating from a customer and its date in the following format:</p>
 <p>CustomerID,Rating,Date</p>
 <ul>
@@ -485,8 +474,8 @@ summary {
 ## See problems(...) for more details.</code></pre>
 <pre class="r"><code>titles &lt;- tibble(titles)</code></pre>
 </div>
-<div id="limpieza-de-los-datos" class="section level3">
-<h3>2.2 Limpieza de los datos</h3>
+<div id="limpieza-de-los-datos" class="section level2">
+<h2><span class="header-section-number">2.2</span> Limpieza de los datos</h2>
 <p>Limpieza datos puntuaciones películas</p>
 <pre class="r"><code>aux %&lt;&gt;% mutate(fila=row_number()) #añadir columna con número de fila
 filas = grep(&quot;:&quot;,aux$X1) #buscar filas con &quot;:&quot;, filas comienzo nueva pelicula
@@ -612,8 +601,28 @@ summary(scores); head(scores)</code></pre>
 ## 6       1     893988 2005-11-17  2005    11    17     3         2003 Dinosaur P~</code></pre>
 </div>
 </div>
-<div id="estadística-descriptiva" class="section level2">
-<h2>3. Estadística Descriptiva</h2>
+<div id="estadística-descriptiva" class="section level1">
+<h1><span class="header-section-number">3</span> Estadística Descriptiva</h1>
+<ol style="list-style-type: decimal">
+<li><p>Justifica para cada una de las variables de la tabla anterior el tipo de dato que mejor se ajusta a cada una de ellas: numérico, ordinal, categórico. . . .</p></li>
+<li><p>Estudia la distribución del numero de películas estrenadas por año. Realiza un gráfico de muestre esta distribución haciendo los ajustes necesarios (agrupaciones, cambios de escala, transformaciones. . . )</p></li>
+<li><p>Investiga la librería lubridate (o la que consideréis para manipulación de datos) y utilízala para transformar la columna de la fecha de la valoración en varias columnas por ejemplo year,month, week, day_of_week.</p></li>
+<li><p>Genera un tabla que para cada película nos dé el número total de valoraciones, la suma de las valoraciones, la media las valoraciones, y otras estadísticos de interés (desviación típica, moda , mediana).</p></li>
+<li><p>De las cinco películas con más número total de valoraciones, compara sus estadísticos y distribuciones (histogramas, boxplot, violin plot,. . . )</p></li>
+<li><p>Investiga la distribución de valoraciones por día de la semana y por mes.¿Qué meses y días de la semana se valoran más películas en netflix?</p></li>
+<li><p>Genera una tabla agrupada por película y año del número de valoraciones. Representa la tabla gráficamente para de las 10 películas con mayor número de valoraciones .</p></li>
+<li><p>Distribución del score promedio por año de las 10 películas con mayor número de valoraciones.</p></li>
+<li><p>Realiza algún gráfico o estudió de estadísticos adicional que consideres informativo en base al análisis exploratorio anterior.</p>
+<ol style="list-style-type: decimal">
+<li>Puntuaciones por fecha</li>
+<li>Puntuaciones por película</li>
+<li>Puntuaciones por usuario</li>
+<li>Número de puntuaciones por película, usuario y año lanzamiento</li>
+<li>Distribucion de los scores (boxplot,barplot)</li>
+<li>Series temporales de puntuaciones</li>
+<li>Distribución de cuantos usuarios evaluan cuantas pelis totales y diferentes</li>
+</ol></li>
+</ol>
 <p>Valoración media por película, de mayor a menor:</p>
 <pre class="r"><code>movie_score_avg &lt;- scores %&gt;%
   group_by(MovieID) %&gt;%
@@ -695,6 +704,9 @@ day_week_score_avg &lt;- scores_day_week %&gt;%
 <pre class="r"><code>n_scores_weekend = weekend_weekday_score_avg  %&gt;% filter(Is_Weekend == TRUE) %&gt;% select(n)
 n_scores = sum(weekend_weekday_score_avg$n)
 n_scores_weekend_weekday_ratio = n_scores_weekend / n_scores #el 18% de las valoraciones son en fin de semana, que es menos que el 28% de días que son fin de semana</code></pre>
+</div>
+<div id="sistema-de-recomendación-similaridad-opcional" class="section level1">
+<h1><span class="header-section-number">4</span> Sistema de Recomendación / Similaridad (opcional)</h1>
 </div>
 
 

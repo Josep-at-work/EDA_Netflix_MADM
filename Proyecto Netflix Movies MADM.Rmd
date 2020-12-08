@@ -2,41 +2,39 @@
 title: "Proyecto Netflix Movies MADM"
 author: "Laura Moreno, Josep Roman, Paul Ramírez"
 date: "11/28/2020"
-output: html_document
+output: 
+  pdf_document:
+    toc: yes
+    number_sections: yes
+  html_document:
+    toc: yes
+    number_sections: yes
+linkcolor: red
+header-includes: \renewcommand{\contentsname}{Contenidos}
+citecolor: blue
+toccolor: blue
+urlcolor: blue
 ---
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(here) #permite ejecutar este rmd desde cualquier carpeta
+library(timeDate)
+library(magrittr) #permite hacer pipes en ambos sentidos
+
+rm(aux, scores, titles, tt) #se eliminan las tablas por si las tenemos ya en el environment
+
 ```
-### Tabla de Contenidos
 
-1. Objetivo
-
-
-2. Data Wrangle
-    1. Importación de datos
-    2. Limpieza de datos
-    
-    
-3. Estadística Descriptiva
-    1. Puntuaciones por fecha
-    2. Puntuaciones por película
-    3. Puntuaciones por usuario
-    4. Número de puntuaciones por película, usuario y año lanzamiento
-    5. Distribucion de los scores (boxplot,barplot)
-    6. Series temporales de puntuaciones
-    7. Distribución de cuantos usuarios evaluan cuantas pelis totales y diferentes
-    
-  
-4. Sistema de Recomendación / Similaridad (opcional)
+# Objetivo
 
 
-## 1. Objetivo
+# Data Wrangle
 
-
-## 2. Data Wrangle
-
-### 2.1 Importación de datos
+## Importación de datos
 
 **Info de los archivos "combined_data_.txt"**
 The first line of each file contains the movie id followed by a colon. Each subsequent line in the file corresponds to a rating from a customer and its date in the following format:
@@ -49,13 +47,7 @@ The first line of each file contains the movie id followed by a colon. Each subs
   * Dates have the format YYYY-MM-DD.  
   
 ```{r, include=FALSE}
-library(tidyverse)
-library(here) #permite ejecutar este rmd desde cualquier carpeta
-library(timeDate)
-library(magrittr) #permite hacer pipes en ambos sentidos
 
-
-rm(aux, scores, titles, tt) #se eliminan las tablas por si las tenemos ya en el environment
 ```
 
 **Carga archivo puntuaciones películas**
@@ -75,7 +67,7 @@ titles <- tibble(titles)
 
 
 
-### 2.2 Limpieza de los datos
+## Limpieza de los datos
 
 Limpieza datos puntuaciones películas
 
@@ -142,7 +134,38 @@ summary(scores); head(scores)
 
 ```
 
-## 3. Estadística Descriptiva
+# Estadística Descriptiva
+
+
+1. Justifica para cada una de las variables de la tabla anterior el tipo de dato que mejor se ajusta a cada
+una de ellas: numérico, ordinal, categórico. . . .
+2. Estudia la distribución del numero de películas estrenadas por año. Realiza un gráfico de muestre esta
+distribución haciendo los ajustes necesarios (agrupaciones, cambios de escala, transformaciones. . . )
+3. Investiga la librería lubridate (o la que consideréis para manipulación de datos) y utilízala para
+transformar la columna de la fecha de la valoración en varias columnas por ejemplo year,month, week,
+day_of_week.
+4. Genera un tabla que para cada película nos dé el número total de valoraciones, la suma de las valoraciones,
+la media las valoraciones, y otras estadísticos de interés (desviación típica, moda , mediana).
+5. De las cinco películas con más número total de valoraciones, compara sus estadísticos y distribuciones
+(histogramas, boxplot, violin plot,. . . )
+6. Investiga la distribución de valoraciones por día de la semana y por mes.¿Qué meses y días de la semana
+se valoran más películas en netflix?
+7. Genera una tabla agrupada por película y año del número de valoraciones. Representa la tabla gráficamente
+para de las 10 películas con mayor número de valoraciones .
+8. Distribución del score promedio por año de las 10 películas con mayor número de valoraciones.
+9. Realiza algún gráfico o estudió de estadísticos adicional que consideres informativo en base al análisis
+exploratorio anterior.
+
+
+    1. Puntuaciones por fecha
+    2. Puntuaciones por película
+    3. Puntuaciones por usuario
+    4. Número de puntuaciones por película, usuario y año lanzamiento
+    5. Distribucion de los scores (boxplot,barplot)
+    6. Series temporales de puntuaciones
+    7. Distribución de cuantos usuarios evaluan cuantas pelis totales y diferentes
+    
+
 
 Valoración media por película, de mayor a menor:
 
@@ -198,7 +221,7 @@ n_scores_weekend_weekday_ratio = n_scores_weekend / n_scores #el 18% de las valo
 
 
 
-
+# Sistema de Recomendación / Similaridad (opcional)
 
 
 

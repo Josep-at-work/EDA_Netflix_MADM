@@ -49,7 +49,9 @@ Para facilitar la labor  os proporcionamos un fichero  en el que de cada pelícu
 
 ```{r}
 library(tidyverse)
-filas_ID_combined_all=read_csv("data/filas_ID_combined_all.txt")
+library(here)
+
+filas_ID_combined_all=read_csv(here("Raw data", "filas_ID_combined_all.txt"))
 glimpse(filas_ID_combined_all)
 ```
 En total hay 17750 películas con ID entero de 1 a 17750
@@ -67,7 +69,7 @@ En total hay 17750 películas con ID entero de 1 a 17750
 Cada fichero contiene una cierta cantidad de películas
 
 ```{r}
-table(filas_ID_combined_all$file_num)
+table(filas_ID_combined_all$data)
 ```
 
 
