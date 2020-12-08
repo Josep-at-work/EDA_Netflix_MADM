@@ -26,7 +26,7 @@ library(here) #permite ejecutar este rmd desde cualquier carpeta
 library(timeDate)
 library(magrittr) #permite hacer pipes en ambos sentidos
 
-# rm(aux, scores, titles, tt) #se eliminan las tablas por si las tenemos ya en el environment
+# rm(aux, scores, titles) #se eliminan las variables por si las tenemos ya en el environment
 rm(list=ls())
 cat("\014")
 ```
@@ -140,12 +140,6 @@ titles = read_table(here("Data",'movie_titles_raw.csv'), col_names=F) %>%
 
 <!-- scores %<>% mutate(across(c(MovieID:CustomerID, Year:Score), as.integer)) -->
 <!-- scores %<>% mutate(Date = as.Date(Date)) -->
-```{r}
-scores %<>% mutate(across(c(MovieID:CustomerID, Year:Score), as.integer))
-scores %<>% mutate(Date = as.Date(Date))
-scores %<>% mutate(Day = as.numeric(Day))
-
-```
 
 <!-- # Exportamos el archivo csv limpio para trabajar con el a partir de ahora -->
 <!-- write_path = here("Data") -->
@@ -156,6 +150,10 @@ scores %<>% mutate(Day = as.numeric(Day))
 
 ```{r message=FALSE, warning=FALSE}
 scores = read_csv(here("Data","nuestras_pelis.csv"))
+
+# Cambiamos los tipos de variable necesarios
+scores %<>% mutate(across(c(MovieID:CustomerID, Year:Score), as.integer))
+scores %<>% mutate(Date = as.Date(Date))
 summary(scores)
 ```
 
