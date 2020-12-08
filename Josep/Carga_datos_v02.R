@@ -40,4 +40,4 @@ for(i in 1:nrow(pelis)){
   }
 }  
 scores
-write_csv(scores,"nuestras_pelis.txt")
+write_csv(scores,"nuestras_pelis.csv")

@@ -16,6 +16,7 @@ output: html_document
 #   -Dates have the format YYYY-MM-DD.
 #
 
+setwd("~/Developer/GitHub/proyecto-netflix-movies-madm/Data")
 
 library(tidyverse)
 library(magrittr)
@@ -24,8 +25,7 @@ rm(scores, title)
 ## Carga de datos
 
 
-#probe=read_csv("Raw data/probe.txt")
-aux=read_tsv("Raw data/combined_data_1.txt",col_names=FALSE,n_max =10000)# leo 10^4 lo leo con tabulador para que lea una varable
+aux=read_tsv("pelis.txt",col_names=FALSE,n_max =10000)# leo 10^4 lo leo con tabulador para que lea una varable
 aux=aux%>% mutate(fila=row_number())
 filas=grep(":",aux$X1)
 filas_ID= aux %>% filter( fila %in% filas )
