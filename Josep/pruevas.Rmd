@@ -1,10 +1,4 @@
 ---
-title: "pruevas"
-author: "Josep R.C."
-date: "12/8/2020"
-output: html_document
----
----
 title: "Proyecto Netflix Movies MADM"
 author: "Laura Moreno, Josep Roman, Paul Ramírez"
 date: "11/28/2020"
@@ -21,7 +15,7 @@ citecolor: blue
 toccolor: blue
 urlcolor: blue
 ---
-
+\fontsize{8}{8}
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -32,7 +26,6 @@ library(here) #permite ejecutar este rmd desde cualquier carpeta
 library(timeDate)
 library(magrittr) #permite hacer pipes en ambos sentidos
 
-# rm(aux, scores, titles, tt) #se eliminan las tablas por si las tenemos ya en el environment
 rm(list=ls())
 cat("\014")
 ```
@@ -55,18 +48,56 @@ The first line of each file contains the movie id followed by a colon. Each subs
   * CustomerIDs range from 1 to 2649429, with gaps. There are 480189 users.
   * Ratings are on a five star (integral) scale from 1 to 5.
   * Dates have the format YYYY-MM-DD.  
+  
+  
+<!-- **Selección de 250 películas de manera aleatoria** -->
 
-**Carga archivo puntuaciones películas**
+<!-- ```{r, warning=FALSE, message=FALSE} -->
+<!-- filas_ID_combined_all = read.csv(here("Data","filas_ID_combined_all.txt")) -->
+<!-- set.seed(080910) -->
+<!-- muestra_grupo = sample(1:12000, 250, replace=F) -->
+<!-- pelis <- filas_ID_combined_all[as.vector(muestra_grupo),] -->
+<!-- attach(pelis) -->
+
+<!-- data1 = read_tsv(here("Raw data","combined_data_1.txt"),col_names = FALSE) -->
+<!-- data2 = read_tsv(here("Raw data","combined_data_2.txt"),col_names = FALSE) -->
+<!-- data3 = read_tsv(here("Raw data","combined_data_3.txt"),col_names = FALSE) -->
+<!-- data4 = read_tsv(here("Raw data","combined_data_4.txt"),col_names = FALSE) -->
+
+<!-- scores = tibble() -->
+<!-- for(i in 1:nrow(pelis)){ -->
+<!--   if (data[i]==1){ -->
+<!--     scores = rbind(scores,data1[fila[i]:fila_final[i],]) -->
+<!--   } -->
+<!--   if (data[i]==2){ -->
+<!--     scores = rbind(scores,data2[fila[i]:fila_final[i],]) -->
+<!--   } -->
+<!--   if (data[i]==3){ -->
+<!--     scores = rbind(scores,data3[fila[i]:fila_final[i],]) -->
+<!--   } -->
+<!--   else { -->
+<!--     scores = rbind(scores,data4[fila[i]:fila_final[i],]) -->
+<!--   } -->
+<!-- }   -->
+<!-- scores -->
+<!-- write_csv(scores,"nuestras_pelis_raw.csv") -->
+
+<!-- ``` -->
+
+
+**Carga archivo puntuaciones de nuestras 250 películas**
 ```{r, warning=FALSE, message=FALSE}
-aux = read_csv(here("Data", "else_if.csv"), col_names = T)
+aux = read_csv(here("Data", "nuestras_pelis_raw.csv"), col_names = T)
 ```
+
+
 ### Importación datos información sobre las películas
 
 **Carga archivo titulos películas**
 ```{r, warning=FALSE, message=FALSE}
-
+rm(titles)
 #algunas peliculas tienen una coma en su nombre, así que cargamos primero todo como una única columna, para luego dividirlo en 3, y hacer un merge la parte de los títulos despues de la coma
-titles = read_table(here("Data",'movie_titles.csv'), col_names=F) %>%
+titles = read_table(here("Data",'movie_titles_raw.csv'), col_names=F) %>%
   separate(col = 1, into = c("MovieID", "Release_Year", "Title"), sep = ",", extra = "merge")
 ```
 
@@ -74,59 +105,47 @@ titles = read_table(here("Data",'movie_titles.csv'), col_names=F) %>%
 
 ### Limpieza datos puntuaciones películas
 
-```{r, warning=FALSE, message=FALSE}
-aux %<>% mutate(fila=row_number()) #añadir columna con número de fila
-filas = grep(":",aux$X1) #buscar filas con ":", filas comienzo nueva pelicula
-filas_ID = aux %>% filter( fila %in% filas ) 
-IDs = unique(filas_ID$X1)
-reps = diff(c(filas_ID$fila,max(aux$fila)+1))
-length(reps)
-dim(aux)
-sum(reps)
-scores = aux %>% mutate(ID1=rep(filas_ID$X1,times=reps)) %>% filter(!(fila %in% filas) )
 
-#ahora borramos los datos de la última película por si se han cortado a medias
-# scores %<>% filter( scores$fila < filas_ID$fila[length(filas_ID$fila)-1] )
+```{r message=FALSE, warning=FALSE}
+scores = aux %>% mutate(fila=row_number())
+filas=grep(":",scores$X1)
+filas_ID= scores %>%
+  filter( fila %in% filas ) %>%                
+  mutate(ID=as.integer(gsub(":","",X1)))      
+reps=diff(c(filas_ID$fila,max(scores$fila)+1)) 
+```
 
-# Ahora arregloamos la variable X1, y separamos la fecha en año, mes y día
-scores %<>% separate(X1,into = c("CustomerID","Score","Date"), sep = ",")
-scores %<>% mutate(Date_copy = Date)  %>% separate(Date_copy, into = c("Year", "Month", "Day"), sep = "-")
-
-#Renombramos y reordenamos las variables
-scores %<>% rename(MovieID = ID1)
-scores <- select(scores, -fila) # eliminamos la columna fila
-scores %<>% relocate(MovieID, CustomerID, Date, Year, Month, Day, Score)
-
-#Quitamos los ":" de el campo MovieID
-scores$MovieID <- scores$MovieID %>% str_replace(":", "")
-
-# Cambiamos los tipos de variable necesarios
-
-scores %<>% mutate(across(c(MovieID:CustomerID, Year:Score), as.integer))
+```{r}
+scores %<>%
+  mutate(ID1=rep(filas_ID$X1,times=reps)) %>%
+  filter(!(fila %in% filas)) %>%
+  select(-fila) %>%
+  separate(X1,into=c("UserID","Score","Date"),sep=",") %>%
+  mutate(Score=as.integer(Score)) %>%
+  separate(col = ID1,into=c("MovieID","borrar")) %>%
+  select(-borrar) %>% mutate(MovieID=as.numeric(MovieID))
+#Reorganización
+scores %<>% relocate(MovieID, UserID, Date, Score)
+#Asignación del tipo de dato
+scores %<>% mutate(across(c(MovieID:UserID, Score), as.integer))
 scores %<>% mutate(Date = as.Date(Date))
-
-
-summary(scores)
 ```
-Vemos que tenemos información de la peliculas 1 a la 15, y las puntuaciones se hicieron entre el 2000 y el 2005 (mayoritariamente en 2005). Distribución de los meses y dias en que se puntuo es uniforme. 
 
-Veamos más informacion sobre los datos:
-```{r, warning=FALSE, message=FALSE}
-length(unique(scores$CustomerID)) #20537 usuarios distintos
-table(scores$Score) # frecuencia puntuaciones
-table(scores$MovieID) # frecuencia title
-```
+<!-- ```{r} -->
+<!-- #para separar Date en año més día -->
+<!-- scores %<>% mutate(Date_copy = Date)  %>% separate(Date_copy, into = c("Year", "Month", "Day"), sep = "-") -->
+<!-- ``` -->
+
+
 ### Limpieza datos títulos películas
 ```{r, warning=FALSE, message=FALSE}
 head(titles)
 titles  %<>% mutate(across(c(MovieID:Release_Year), as.integer))
 ```
 
-**Left join de puntuaciones películas con los títulos
+Hacemos un **left join con** de *scores* con *titles* para añadir a la primera los títulos de cada película y el año en que se publicaron
 
-Hacemos un left join con 'titles' para añadir a la tabla 'scores' los títulos de cada película y el año en que se publicaron
-
-- El `left_join` se queda con todas las observaciones que aparecen en el primer dataset, es decir, solo tendrá en cuenta las películas que observadas en el primer dataset.
+- El `left_join` se queda con todas las observaciones que aparecen en el primer *dataset*, es decir, solo tendrá en cuenta las películas observadas en *scores*.
 
 - El `join` entre tablas lo hemos hecho con la columna `MovieID`, presente en ambas tablas. Tal y como vemos en la tabla `movies_titles.csv`, cada película tiene un `MovieID` único, lo que se conoce como _clave primaria_. No obstante, en la tabla `scores` cada MovieID puede ser puntuada por varios `CustomerID`, en este caso, la _clave primaria_ se constituye a partir de la combinación de ambas variables.
 
@@ -134,10 +153,38 @@ Hacemos un left join con 'titles' para añadir a la tabla 'scores' los títulos 
 scores %<>% left_join(titles, by = 'MovieID') 
 summary(scores)
 kable(head(scores))
-
 ```
 
+```{r}
+# Exportamos el archivo csv limpio para trabajar con el a partir de ahora
+write_path = here("Model_Data")
+write_csv(scores, "bb.csv")
+write_csv(scores, "nuestras_pelis1.csv", path = write_path)
+```
+
+
+```{r message=FALSE, warning=FALSE}
+scores = read_csv(here("Data","nuestras_pelis.csv"))
+
+# Cambiamos los tipos de variable necesarios
+scores %<>% mutate(across(c(MovieID:CustomerID, Year:Score), as.integer))
+scores %<>% mutate(Date = as.Date(Date))
+summary(scores)
+```
+
+
+
+
 # Estadística Descriptiva
+
+Vemos que tenemos información de la peliculas 1 a la 15, y las puntuaciones se hicieron entre el 2000 y el 2005 (mayoritariamente en 2005). Distribución de los meses y dias en que se puntuo es uniforme. 
+
+Veamos más informacion sobre los datos:
+```{r, warning=FALSE, message=FALSE}
+length(unique(scores$CustomerID)) #20537 usuarios distintos
+table(scores$Score) # frecuencia puntuaciones
+table(head(scores$MovieID)) # frecuencia title
+```
 
 
 1. Justifica para cada una de las variables de la tabla anterior el tipo de dato que mejor se ajusta a cada una de ellas: numérico, ordinal, categórico. . . .
@@ -157,7 +204,7 @@ release_year_score_avg <- scores %>%
   summarise(Mean_Score = mean(Score), n = n()) %>%
   arrange(desc(Mean_Score))
 
-kable(release_year_score_avg)
+kable(head(release_year_score_avg))
 ```
 
 3. Investiga la librería lubridate (o la que consideréis para manipulación de datos) y utilízala para
@@ -167,6 +214,7 @@ day_of_week.
 Valoración media por día de la semana, de mayor a menor:
 
 ```{r, warning=FALSE, message=FALSE}
+
 scores_day_week <- scores %>% mutate(Day_Week = weekdays(Date))
 scores_day_week %<>% mutate(Is_Weekend = isWeekend(Date))
 
@@ -204,7 +252,7 @@ movie_score_avg <- scores %>%
   left_join(titles, by = "MovieID") %>%
   arrange(desc(Mean_Score))
 
-kable(movie_score_avg)
+kable(head(movie_score_avg))
   
 ```
 
