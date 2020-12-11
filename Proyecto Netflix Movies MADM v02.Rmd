@@ -338,7 +338,7 @@ ggplot(data = sample, aes(x = Mean_Score, y = Release_Year)) +
   theme_test()
 ```
 
-Luego, vamos a observar si existe correlación entre estas variables: Observamos que las variables `n` (valoración absoluta) esta muy correlacionada con la `Mean_Score`, lo cual es lógico.
+Luego, vamos a observar si existe correlación entre estas variables: Observamos que las variables `n` (valoración absoluta) esta muy correlacionada con la `Mean_Score`, lo cual es lógico:
 ```{r, echo = FALSE}
 library(ggcorrplot)
 corr <- round(cor(sample[1:4]), 1) #excluir los títulos
