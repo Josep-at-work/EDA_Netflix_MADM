@@ -149,7 +149,7 @@ titles = read_table(here("Data",'movie_titles_raw.csv'), col_names=F) %>%
 scores = read_csv(here("Data","nuestras_pelis.csv"))
 
 # Cambiamos los tipos de variable necesarios
-scores %<>% mutate(across(c(MovieID:CustomerID, Year:Score), as.integer))
+scores %<>% mutate(across(c(MovieID:UserID,Score), as.integer))
 scores %<>% mutate(Date = as.Date(Date))
 summary(scores)
 ```
@@ -194,7 +194,7 @@ table(head(scores$MovieID)) # frecuencia title
 glimpse(scores)
 ```
 ### Variables tipo _int_: MovieID, CustomerID, Score, Release_Year
-- _CustomerID_: _<int>_ Contiene un número entero, estos son objetos que contienen un único campo, un identificado ID para cada cliente, no queremos duplicados. 
+- _UserID_: _<int>_ Contiene un número entero, estos son objetos que contienen un único campo, un identificado ID para cada cliente, no queremos duplicados. 
 - _MovieID_: _<int>_ Contiene un número entero, estos son objetos que contienen un único campo, un identificado ID para cada película, no queremos duplicados. Un integer es inmutable.
 - _Release_Year_: _<int>_ No existen años con decimales, por lo tanto utilizar variables para datos enteros seria suficiente.
 Movie_title: chr. Utilizamos el tipo carácter porque nos interesan objetos que representan un conjunto de letras.
