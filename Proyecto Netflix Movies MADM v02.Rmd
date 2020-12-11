@@ -50,46 +50,58 @@ The first line of each file contains the movie id followed by a colon. Each subs
   * Dates have the format YYYY-MM-DD.  
   
   
-<!-- **Selección de 250 películas de manera aleatoria** -->
+**Selección de 250 películas de manera aleatoria**
+Utilizamos el código de Ricardo para seleccionar nuestras 250 peliculas con las siguientes modificaciones:
 
-<!-- ```{r, warning=FALSE, message=FALSE} -->
-<!-- filas_ID_combined_all = read.csv(here("Data","filas_ID_combined_all.txt")) -->
-<!-- set.seed(080910) -->
-<!-- muestra_grupo = sample(1:12000, 250, replace=F) -->
-<!-- pelis <- filas_ID_combined_all[as.vector(muestra_grupo),] -->
-<!-- attach(pelis) -->
+```{r}
+filas_ID_combined_all = read.csv(here("Data","filas_ID_combined_all.txt"))
+set.seed(081034)
+n_filas = nrow(filas_ID_combined_all)
+muestra_grupo = sample(1:n_filas, 250, replace=F)
+pelis <- filas_ID_combined_all[as.vector(muestra_grupo),] 
+```
 
-<!-- data1 = read_tsv(here("Raw data","combined_data_1.txt"),col_names = FALSE) -->
-<!-- data2 = read_tsv(here("Raw data","combined_data_2.txt"),col_names = FALSE) -->
-<!-- data3 = read_tsv(here("Raw data","combined_data_3.txt"),col_names = FALSE) -->
-<!-- data4 = read_tsv(here("Raw data","combined_data_4.txt"),col_names = FALSE) -->
 
-<!-- scores = tibble() -->
-<!-- for(i in 1:nrow(pelis)){ -->
-<!--   if (data[i]==1){ -->
-<!--     scores = rbind(scores,data1[fila[i]:fila_final[i],]) -->
-<!--   } -->
-<!--   if (data[i]==2){ -->
-<!--     scores = rbind(scores,data2[fila[i]:fila_final[i],]) -->
-<!--   } -->
-<!--   if (data[i]==3){ -->
-<!--     scores = rbind(scores,data3[fila[i]:fila_final[i],]) -->
-<!--   } -->
-<!--   else { -->
-<!--     scores = rbind(scores,data4[fila[i]:fila_final[i],]) -->
-<!--   } -->
-<!-- }   -->
-<!-- scores -->
-<!-- write_csv(scores,"nuestras_pelis_raw.csv") -->
+Cargamos los 4 archivos originales con las puntuaciones:
+```{}
+attach(pelis)
 
-<!-- ``` -->
+data1 = read_tsv(here("Raw data","combined_data_1.txt"),col_names = FALSE)
+data2 = read_tsv(here("Raw data","combined_data_2.txt"),col_names = FALSE)
+data3 = read_tsv(here("Raw data","combined_data_3.txt"),col_names = FALSE)
+data4 = read_tsv(here("Raw data","combined_data_4.txt"),col_names = FALSE)
+```
 
+Generamos un tibble vacío, y en función del archivo en el que se encuentre la pelicula, vamos añadiendo en `scores` las filas correspondientes a nuestras películas:
+```{echo=FALSE}
+scores = tibble()
+for(i in 1:nrow(pelis)){
+  if (data[i]==1){
+    scores = rbind(scores,data1[fila[i]:fila_final[i],])
+  }
+  else if (data[i]==2){
+    scores = rbind(scores,data2[fila[i]:fila_final[i],])
+  }
+  else if (data[i]==3){
+    scores = rbind(scores,data3[fila[i]:fila_final[i],])
+  }
+  else {
+    scores = rbind(scores,data4[fila[i]:fila_final[i],])
+  }
+}
+
+```
+
+Guardamos un csv con solo nuestras 250 películas en el formato original
+```{}
+write_csv(scores,"nuestras_pelis_raw.csv")
+```
 
 **Carga archivo puntuaciones de nuestras 250 películas**
-
-<!-- ```{r, warning=FALSE, message=FALSE} -->
-<!-- aux = read_csv(here("Data", "nuestras_pelis_raw.csv"), col_names = T) -->
-<!-- ``` -->
+Cargamos el csv generado en el paso anterior:
+```{}
+aux = read_csv(here("Data", "nuestras_pelis_raw.csv"), col_names = T)
+```
 
 ### Importación datos información sobre las películas
 
@@ -105,64 +117,62 @@ titles = read_table(here("Data",'movie_titles_raw.csv'), col_names=F) %>%
 ## Limpieza de los datos
 
 ### Limpieza datos puntuaciones películas
+Aplicamos el código de Ricardo para limpiar el dataframe `aux` y pasar al dataframe `scores` con una fila para cada valoración de usuario
 
+```{echo=FALSE}
+scores = aux %>% mutate(fila=row_number())
+filas=grep(":",scores$X1)
+filas_ID= scores %>%
+  filter( fila %in% filas ) %>%
+  mutate(ID=as.integer(gsub(":","",X1)))
+reps=diff(c(filas_ID$fila,max(scores$fila)+1))
 
-<!-- ```{r message=FALSE, warning=FALSE} -->
-<!-- scores = aux %>% mutate(fila=row_number()) -->
-<!-- filas=grep(":",scores$X1) -->
-<!-- filas_ID= scores %>% -->
-<!--   filter( fila %in% filas ) %>%                 -->
-<!--   mutate(ID=as.integer(gsub(":","",X1)))       -->
-<!-- reps=diff(c(filas_ID$fila,max(scores$fila)+1))  -->
-<!-- ``` -->
+scores %<>%
+  mutate(ID1=rep(filas_ID$X1,times=reps)) %>%
+  filter(!(fila %in% filas)) %>%
+  select(-fila) %>%
+  separate(X1,into=c("UserID","Score","Date"),sep=",") %>%
+  mutate(Score=as.integer(Score)) %>%
+  separate(col = ID1,into=c("MovieID","borrar")) %>%
+  select(-borrar) %>% mutate(MovieID=as.numeric(MovieID))
+```
 
-<!-- ```{r} -->
-<!-- scores %<>% -->
-<!--   mutate(ID1=rep(filas_ID$X1,times=reps)) %>% -->
-<!--   filter(!(fila %in% filas)) %>% -->
-<!--   select(-fila) %>% -->
-<!--   separate(X1,into=c("UserID","Score","Date"),sep=",") %>% -->
-<!--   mutate(Score=as.integer(Score)) %>% -->
-<!--   separate(col = ID1,into=c("MovieID","borrar")) %>% -->
-<!--   select(-borrar) %>% mutate(MovieID=as.numeric(MovieID)) -->
-<!-- #Reorganización -->
-<!-- scores %<>% relocate(MovieID, UserID, Date, Score) -->
-<!-- #Asignación del tipo de dato -->
-<!-- scores %<>% mutate(across(c(MovieID:UserID, Score), as.integer)) -->
-<!-- scores %<>% mutate(Date = as.Date(Date)) -->
-<!-- ``` -->
-
-
-<!-- ```{r} -->
-<!-- #para separar Date en año més día -->
-<!-- scores %<>% mutate(Date_copy = Date)  %>% separate(Date_copy, into = c("Year", "Month", "Day"), sep = "-") -->
-<!-- ``` -->
+Reorganizamos variables y asignamos tipos de variable:
+```{}
+#Reorganización
+scores %<>% relocate(MovieID, UserID, Date, Score)
+#Asignación del tipo de dato
+scores %<>% mutate(across(c(MovieID:UserID, Score), as.integer))
+scores %<>% mutate(Date = as.Date(Date))
+#para separar Date en año més día
+scores %<>% mutate(Date_copy = Date)  %>% separate(Date_copy, into = c("Year", "Month", "Day"), sep = "-")
+```
 
 
 ### Limpieza datos títulos películas
-```{r, warning=FALSE, message=FALSE}
+```{r}
 head(titles)
 titles  %<>% mutate(across(c(MovieID:Release_Year), as.integer))
 ```
 
+### Join de ´scores´ con ´titles´
 Hacemos un **left join con** de *scores* con *titles* para añadir a la primera los títulos de cada película y el año en que se publicaron
 
 - El `left_join` se queda con todas las observaciones que aparecen en el primer *dataset*, es decir, solo tendrá en cuenta las películas observadas en *scores*.
 
 - El `join` entre tablas lo hemos hecho con la columna `MovieID`, presente en ambas tablas. Tal y como vemos en la tabla `movies_titles.csv`, cada película tiene un `MovieID` único, lo que se conoce como _clave primaria_. No obstante, en la tabla `scores` cada MovieID puede ser puntuada por varios `UserID`, en este caso, la _clave primaria_ se constituye a partir de la combinación de ambas variables.
 
-<!-- ```{r, warning=FALSE, message=FALSE} -->
-<!-- scores %<>% left_join(titles, by = 'MovieID')  -->
-<!-- summary(scores) -->
-<!-- kable(head(scores)) -->
-<!-- ``` -->
+```{}
+scores %<>% left_join(titles, by = 'MovieID')
+summary(scores)
+kable(head(scores))
+```
 
-
-<!-- ```{r warning=FALSE, message=FALSE} -->
-<!-- # Exportamos el archivo csv limpio para trabajar con el a partir de ahora -->
-<!-- setwd("~/Developer/GitHub/proyecto-netflix-movies-madm/Data") -->
-<!-- write_csv(scores,"nuestras_pelis.csv") -->
-<!-- ``` -->
+Exportamos el archivo csv limpio para trabajar con el a partir de ahora
+```{}
+setwd("~/Developer/GitHub/proyecto-netflix-movies-madm/Data")
+write_csv(scores,"nuestras_pelis.csv")
+```
 
 
 ```{r message=FALSE, warning=FALSE}
@@ -170,8 +180,7 @@ scores = read_csv(here("Data","nuestras_pelis.csv"))
 
 # Cambiamos los tipos de variable necesarios
 scores %<>% mutate(across(c(MovieID,UserID,Score,Release_Year), as.integer))
-summary(scores)
-# glimpse(scores) #para ver el tipo de dato
+glimpse(scores) #para ver el tipo de dato
 ```
 
 
@@ -261,7 +270,7 @@ Valoración media por película, de mayor a menor:
 movie_score_avg <- scores %>%
   group_by(MovieID) %>%
   summarise(Mean_Score = mean(Score), n = n()) %>%
-  left_join(titles, by = "MovieID") %>%
+  left_join(titles, by = 'MovieID') %>%
   arrange(desc(Mean_Score))
 
 kable(head(movie_score_avg))
