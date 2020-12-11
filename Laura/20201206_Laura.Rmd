@@ -1,0 +1,59 @@
+---
+title: "test"
+author: "Laura Moreno Montes"
+date: "8/12/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r}
+filas_ID_combined_all=read_csv("data_ricardo/filas_ID_combined_all.txt")
+```
+
+```{r}
+glimpse(filas_ID_combined_all)
+```
+```{r}
+table(filas_ID_combined_all$data)
+```
+```{r}
+set.seed(01003)
+runif(4)
+```
+```{r}
+muestra_grupo=sample(1:12000,250,replace = FALSE)
+head(muestra_grupo)
+```
+### Cargar csv títulos
+
+```{r, include=false}
+library(readr)
+movie_titles <- read_csv("Raw data/movie_titles.csv")
+```
+Para incorporar la columna a la tabla 'Scores' lo vamos a hacer mediante un `left_join`.
+
+- El `left_join` se queda con todas las observaciones que aparecen en el primer dataset, es decir, solo tendrá en cuenta las películas que observadas en el primer dataset.
+
+- El `join` entre tablas lo hemos hecho con la columna `MovieID`, presente en ambas tablas. Tal y como vemos en la tabla `movies_titles.csv`, cada película tiene un `MovieID` único, lo que se conoce como _clave primaria_. No obstante, en la tabla `scores` cada MovieID puede ser puntuada por varios `CustomerID`, en este caso, la _clave primaria_ se constituye a partir de la combinación de ambas variables.
+```{r}
+(scores %>% 
+  left_join(movie_titles,by = 'MovieID' ) -> scores)
+```
+
+```{r}
+library(lubridate)
+today() #devuelve fecha actual
+now() #devuelve fecha y tiempo + hora actual
+ymd(c("2018-04-13","2018-04-14")) #Transforma una fecha (año-mes-día) almacenada en un vector numérico o cadena en un objeto fecha
+#ydm(), mdy(), myd(), dmy(), dym()
+
+
+```
+```{r}
+test=read_csv("Raw data/combined_data_1.txt")
+```
+
