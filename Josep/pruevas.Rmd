@@ -3,7 +3,7 @@ title: "Proyecto Netflix Movies MADM"
 author: "Laura Moreno, Josep Roman, Paul Ramírez"
 date: "11/28/2020"
 output: 
-  pdf_document:
+  pdf_document: 
     toc: yes
     number_sections: yes
   html_document:
@@ -42,58 +42,71 @@ cat("\014")
 **Info de los archivos "combined_data_.txt"**
 The first line of each file contains the movie id followed by a colon. Each subsequent line in the file corresponds to a rating from a customer and its date in the following format:
 
-  CustomerID,Rating,Date  
+  UserID,Rating,Date  
   
   * MovieIDs range from 1 to 17770 sequentially.
-  * CustomerIDs range from 1 to 2649429, with gaps. There are 480189 users.
+  * UserIDs range from 1 to 2649429, with gaps. There are 480189 users.
   * Ratings are on a five star (integral) scale from 1 to 5.
   * Dates have the format YYYY-MM-DD.  
   
   
-<!-- **Selección de 250 películas de manera aleatoria** -->
+**Selección de 250 películas de manera aleatoria**
+Utilizamos el código de Ricardo para seleccionar nuestras 250 peliculas con las siguientes modificaciones:
 
-<!-- ```{r, warning=FALSE, message=FALSE} -->
-<!-- filas_ID_combined_all = read.csv(here("Data","filas_ID_combined_all.txt")) -->
-<!-- set.seed(080910) -->
-<!-- muestra_grupo = sample(1:12000, 250, replace=F) -->
-<!-- pelis <- filas_ID_combined_all[as.vector(muestra_grupo),] -->
-<!-- attach(pelis) -->
-
-<!-- data1 = read_tsv(here("Raw data","combined_data_1.txt"),col_names = FALSE) -->
-<!-- data2 = read_tsv(here("Raw data","combined_data_2.txt"),col_names = FALSE) -->
-<!-- data3 = read_tsv(here("Raw data","combined_data_3.txt"),col_names = FALSE) -->
-<!-- data4 = read_tsv(here("Raw data","combined_data_4.txt"),col_names = FALSE) -->
-
-<!-- scores = tibble() -->
-<!-- for(i in 1:nrow(pelis)){ -->
-<!--   if (data[i]==1){ -->
-<!--     scores = rbind(scores,data1[fila[i]:fila_final[i],]) -->
-<!--   } -->
-<!--   if (data[i]==2){ -->
-<!--     scores = rbind(scores,data2[fila[i]:fila_final[i],]) -->
-<!--   } -->
-<!--   if (data[i]==3){ -->
-<!--     scores = rbind(scores,data3[fila[i]:fila_final[i],]) -->
-<!--   } -->
-<!--   else { -->
-<!--     scores = rbind(scores,data4[fila[i]:fila_final[i],]) -->
-<!--   } -->
-<!-- }   -->
-<!-- scores -->
-<!-- write_csv(scores,"nuestras_pelis_raw.csv") -->
-
-<!-- ``` -->
-
-
-**Carga archivo puntuaciones de nuestras 250 películas**
-```{r, warning=FALSE, message=FALSE}
-aux = read_csv(here("Data", "nuestras_pelis_raw.csv"), col_names = T)
+```{}
+filas_ID_combined_all = read.csv(here("Data","filas_ID_combined_all.txt"))
+set.seed(081034)
+n_filas = nrow(filas_ID_combined_all)
+muestra_grupo = sample(1:n_filas, 250, replace=F)
+pelis <- filas_ID_combined_all[as.vector(muestra_grupo),] 
 ```
 
+
+Cargamos los 4 archivos originales con las puntuaciones:
+```{}
+attach(pelis)
+
+data1 = read_tsv(here("Raw data","combined_data_1.txt"),col_names = FALSE)
+data2 = read_tsv(here("Raw data","combined_data_2.txt"),col_names = FALSE)
+data3 = read_tsv(here("Raw data","combined_data_3.txt"),col_names = FALSE)
+data4 = read_tsv(here("Raw data","combined_data_4.txt"),col_names = FALSE)
+```
+
+Generamos un tibble vacío, y en función del archivo en el que se encuentre la pelicula, vamos añadiendo en `scores` las filas correspondientes a nuestras películas:
+```{echo=FALSE}
+scores = tibble()
+for(i in 1:nrow(pelis)){
+  if (data[i]==1){
+    scores = rbind(scores,data1[fila[i]:fila_final[i],])
+  }
+  else if (data[i]==2){
+    scores = rbind(scores,data2[fila[i]:fila_final[i],])
+  }
+  else if (data[i]==3){
+    scores = rbind(scores,data3[fila[i]:fila_final[i],])
+  }
+  else {
+    scores = rbind(scores,data4[fila[i]:fila_final[i],])
+  }
+}
+
+```
+
+Guardamos un csv con solo nuestras 250 películas en el formato original
+```{}
+write_csv(scores,"nuestras_pelis_raw.csv")
+```
+
+**Carga archivo puntuaciones de nuestras 250 películas**
+Cargamos el csv generado en el paso anterior:
+```{}
+aux = read_csv(here("Data", "nuestras_pelis_raw.csv"), col_names = T)
+```
 
 ### Importación datos información sobre las películas
 
 **Carga archivo titulos películas**
+
 ```{r, warning=FALSE, message=FALSE}
 rm(titles)
 #algunas peliculas tienen una coma en su nombre, así que cargamos primero todo como una única columna, para luego dividirlo en 3, y hacer un merge la parte de los títulos despues de la coma
@@ -104,18 +117,16 @@ titles = read_table(here("Data",'movie_titles_raw.csv'), col_names=F) %>%
 ## Limpieza de los datos
 
 ### Limpieza datos puntuaciones películas
+Aplicamos el código de Ricardo para limpiar el dataframe `aux` y pasar al dataframe `scores` con una fila para cada valoración de usuario
 
-
-```{r message=FALSE, warning=FALSE}
+```{echo=FALSE}
 scores = aux %>% mutate(fila=row_number())
 filas=grep(":",scores$X1)
 filas_ID= scores %>%
-  filter( fila %in% filas ) %>%                
-  mutate(ID=as.integer(gsub(":","",X1)))      
-reps=diff(c(filas_ID$fila,max(scores$fila)+1)) 
-```
+  filter( fila %in% filas ) %>%
+  mutate(ID=as.integer(gsub(":","",X1)))
+reps=diff(c(filas_ID$fila,max(scores$fila)+1))
 
-```{r}
 scores %<>%
   mutate(ID1=rep(filas_ID$X1,times=reps)) %>%
   filter(!(fila %in% filas)) %>%
@@ -124,42 +135,43 @@ scores %<>%
   mutate(Score=as.integer(Score)) %>%
   separate(col = ID1,into=c("MovieID","borrar")) %>%
   select(-borrar) %>% mutate(MovieID=as.numeric(MovieID))
+```
+
+Reorganizamos variables y asignamos tipos de variable:
+```{}
 #Reorganización
 scores %<>% relocate(MovieID, UserID, Date, Score)
 #Asignación del tipo de dato
 scores %<>% mutate(across(c(MovieID:UserID, Score), as.integer))
 scores %<>% mutate(Date = as.Date(Date))
+#para separar Date en año més día
+scores %<>% mutate(Date_copy = Date)  %>% separate(Date_copy, into = c("Year", "Month", "Day"), sep = "-")
 ```
-
-<!-- ```{r} -->
-<!-- #para separar Date en año més día -->
-<!-- scores %<>% mutate(Date_copy = Date)  %>% separate(Date_copy, into = c("Year", "Month", "Day"), sep = "-") -->
-<!-- ``` -->
 
 
 ### Limpieza datos títulos películas
-```{r, warning=FALSE, message=FALSE}
+```{r}
 head(titles)
 titles  %<>% mutate(across(c(MovieID:Release_Year), as.integer))
 ```
 
+### Join de ´scores´ con ´titles´
 Hacemos un **left join con** de *scores* con *titles* para añadir a la primera los títulos de cada película y el año en que se publicaron
 
 - El `left_join` se queda con todas las observaciones que aparecen en el primer *dataset*, es decir, solo tendrá en cuenta las películas observadas en *scores*.
 
-- El `join` entre tablas lo hemos hecho con la columna `MovieID`, presente en ambas tablas. Tal y como vemos en la tabla `movies_titles.csv`, cada película tiene un `MovieID` único, lo que se conoce como _clave primaria_. No obstante, en la tabla `scores` cada MovieID puede ser puntuada por varios `CustomerID`, en este caso, la _clave primaria_ se constituye a partir de la combinación de ambas variables.
+- El `join` entre tablas lo hemos hecho con la columna `MovieID`, presente en ambas tablas. Tal y como vemos en la tabla `movies_titles.csv`, cada película tiene un `MovieID` único, lo que se conoce como _clave primaria_. No obstante, en la tabla `scores` cada MovieID puede ser puntuada por varios `UserID`, en este caso, la _clave primaria_ se constituye a partir de la combinación de ambas variables.
 
-```{r, warning=FALSE, message=FALSE}
-scores %<>% left_join(titles, by = 'MovieID') 
+```{}
+scores %<>% left_join(titles, by = 'MovieID')
 summary(scores)
 kable(head(scores))
 ```
 
-```{r}
-# Exportamos el archivo csv limpio para trabajar con el a partir de ahora
-write_path = here("Model_Data")
-write_csv(scores, "bb.csv")
-write_csv(scores, "nuestras_pelis1.csv", path = write_path)
+Exportamos el archivo csv limpio para trabajar con el a partir de ahora
+```{}
+setwd("~/Developer/GitHub/proyecto-netflix-movies-madm/Data")
+write_csv(scores,"nuestras_pelis.csv")
 ```
 
 
@@ -167,21 +179,19 @@ write_csv(scores, "nuestras_pelis1.csv", path = write_path)
 scores = read_csv(here("Data","nuestras_pelis.csv"))
 
 # Cambiamos los tipos de variable necesarios
-scores %<>% mutate(across(c(MovieID:CustomerID, Year:Score), as.integer))
-scores %<>% mutate(Date = as.Date(Date))
-summary(scores)
+scores %<>% mutate(across(c(MovieID,UserID,Score,Release_Year), as.integer))
+glimpse(scores) #para ver el tipo de dato
 ```
-
-
 
 
 # Estadística Descriptiva
 
-Vemos que tenemos información de la peliculas 1 a la 15, y las puntuaciones se hicieron entre el 2000 y el 2005 (mayoritariamente en 2005). Distribución de los meses y dias en que se puntuo es uniforme. 
+Vemos que tenemos información de la peliculas  a la 15, y las puntuaciones se hicieron entre el 2000 y el 2005 (mayoritariamente en 2005). Distribución de los meses y dias en que se puntuo es uniforme. 
 
 Veamos más informacion sobre los datos:
 ```{r, warning=FALSE, message=FALSE}
-length(unique(scores$CustomerID)) #20537 usuarios distintos
+summary(scores)
+length(unique(scores$UserID)) #20537 usuarios distintos
 table(scores$Score) # frecuencia puntuaciones
 table(head(scores$MovieID)) # frecuencia title
 ```
@@ -190,11 +200,23 @@ table(head(scores$MovieID)) # frecuencia title
 1. Justifica para cada una de las variables de la tabla anterior el tipo de dato que mejor se ajusta a cada una de ellas: numérico, ordinal, categórico. . . .
 
 ```{r}
-summary(scores)
+glimpse(scores)
 ```
+### Variables tipo _int_: MovieID, CustomerID, Score, Release_Year
+- _UserID_: _<int>_ Contiene un número entero, estos son objetos que contienen un único campo, un identificado ID para cada cliente, no queremos duplicados. 
+- _MovieID_: _<int>_ Contiene un número entero, estos son objetos que contienen un único campo, un identificado ID para cada película, no queremos duplicados. Un integer es inmutable.
+- _Release_Year_: _<int>_ No existen años con decimales, por lo tanto utilizar variables para datos enteros seria suficiente.
+Movie_title: chr. Utilizamos el tipo carácter porque nos interesan objetos que representan un conjunto de letras.
+- _Score_: _<int>_ Las puntuaciones son números enteros del 1 al 5. Las películas no aceptan decimales como puntuación.
 
-2. Estudia la distribución del numero de películas estrenadas por año. Realiza un gráfico de muestre esta
-distribución haciendo los ajustes necesarios (agrupaciones, cambios de escala, transformaciones. . . )
+### Variables tipo _date_: Date
+- _Date_ : _<date>_ esta variable incluye datos de tipo fecha (YY/MM/DD) por ello lo más adecuado es tratarlo como una variable de este tipo. Gracias a esto, podemos aplicar paquetes como _lubridate_ para manipular fechas.
+
+### Variables tipo _chr_: Title
+- _Title_: Utilizamos el tipo carácter porque nos interesan objetos que representan un conjunto de letras.
+
+
+2. Estudia la distribución del numero de películas estrenadas por año. Realiza un gráfico de muestre esta distribución haciendo los ajustes necesarios (agrupaciones, cambios de escala, transformaciones. . . )
 
 Valoración media por 'Release_Year', de mayor a menor:
 
@@ -249,7 +271,7 @@ Valoración media por película, de mayor a menor:
 movie_score_avg <- scores %>%
   group_by(MovieID) %>%
   summarise(Mean_Score = mean(Score), n = n()) %>%
-  left_join(titles, by = "MovieID") %>%
+  left_join(titles, by = 'MovieID') %>%
   arrange(desc(Mean_Score))
 
 kable(head(movie_score_avg))
@@ -258,6 +280,108 @@ kable(head(movie_score_avg))
 
 5. De las cinco películas con más número total de valoraciones, compara sus estadísticos y distribuciones
 (histogramas, boxplot, violin plot,. . . )
+
+```{r, include=FALSE}
+sample = head(movie_score_avg[order(movie_score_avg$n, decreasing = TRUE),],5)
+#sample
+```
+
+A continuación, representamos el top 5 películas en un `treemap`:
+```{r, echo = FALSE}
+library(treemapify)
+
+(ptm<-ggplot(sample,aes(area=n,fill=Title,
+                        subgroup = n, subgroup2 = round(Mean_Score,2),
+                    label=Title))+
+    ggtitle('Top 5 películas')+
+    labs(caption = "Selección según el valor absoluto")+
+    geom_treemap(color = '#A67B5B') +
+    theme(legend.title = element_blank(),
+          legend.position = "none")+
+    geom_treemap_subgroup_text(place = "bottomright", 
+                      grow = F,
+                      alpha = 0.9,
+                      size = 7) +
+    geom_treemap_subgroup2_text(place = "bottomleft", 
+                               grow = F,
+                               alpha = 0.9,
+                               size = 8) +
+  geom_treemap_text(place = "centre",
+                             grow = F,
+                             alpha = 1,
+                             colour = "#FAFAFA",
+                            size = 10) +
+    geom_treemap_subgroup_border(colour="black",size=1)+
+    geom_treemap_subgroup2_border(colour="black",size=1)+
+    theme(plot.background = element_rect(fill = "#FFFEF2")) )
+```
+
+Mediante un `barplot` podemos ver el año de estreno de las películas seleccionadas:
+```{r, echo = FALSE}
+ggplot(data = sample, aes(x = Release_Year, fill = as.factor(Release_Year))) + 
+  geom_bar() + 
+  xlab("Release Year") + 
+  ylab("Number of Films") + 
+  ggtitle("Bar Plot") +
+  labs(fill = "Release Year") + 
+  theme_test() #para cambiar el 'tema' de visualización
+```
+
+Para terminar con los gráficos de dispersión, estudiamos si existe relación entre, la puntuación media y el año de estreno:
+```{r}
+##Gráfico de Dispersión (Scatterplot)
+ggplot(data = sample, aes(x = Mean_Score, y = Release_Year)) + 
+  geom_point(color = 'red', fill = 'red', size = 4, shape = 18, alpha = 0.5) +
+  #geom_smooth(color = 'red') + #para poner línea de tendencia
+  xlab('Mean_Score') + 
+  ylab('Release_Year') +
+  ggtitle('Relation between Mean_Score & Release_Year') + 
+  theme_test()
+```
+
+Luego, vamos a observar si existe correlación entre estas variables: Observamos que las variables `n` (valoración absoluta) esta muy correlacionada con la `Mean_Score`, lo cual es lógico:
+```{r, echo = FALSE}
+library(ggcorrplot)
+corr <- round(cor(sample[1:4]), 1) #excluir los títulos
+#como la matriz de correlación es simétrica, basta con graficar simplemente una parte de ella
+ggcorrplot(corr, method = 'circle', type = 'lower', lab = TRUE) +
+  ggtitle("Correlograma del conjunto sample") +
+  theme_minimal() +
+  theme(legend.position="none")
+```
+
+Después, estudiamos la distribución de la variable `Mean_Score`:
+```{r, echo = FALSE}
+ggplot(sample) + 
+  geom_histogram(bins = 7, aes(x = Mean_Score), fill = 'steelblue') + 
+  xlab("Mean_Score") + 
+  ylab("Frecuencia") + 
+  ggtitle("Distribución de la variable Mean_Score") +
+  theme_minimal()
+```
+
+
+###Histograma
+```{r}
+library(ggplot2)
+```
+
+```{r, para n}
+par(bg="grey98", mar=c(3,3,3,3), mfcol=c(1,2))
+#Primer gráfico
+hist(x = sample$n, main = "Histograma de número 
+     total de valoraciones", 
+     xlab = "Valoraciones", ylab = "Frecuencia", col = 'chocolate')
+#Segundo gráfico
+hist(x = sample$Mean_Score, main = "Histograma de 
+    puntuación media", 
+     xlab = "Valoraciones", ylab = "Frecuencia", col = 'chocolate1')
+```
+
+###ggplot
+```{r}
+ggplot(data = sample, aes(x = Release_Year), main = Años) + geom_bar()
+```
 
 6. Investiga la distribución de valoraciones por día de la semana y por mes.¿Qué meses y días de la semana
 se valoran más películas en netflix?

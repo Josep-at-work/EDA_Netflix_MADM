@@ -219,6 +219,27 @@ Movie_title: chr. Utilizamos el tipo carácter porque nos interesan objetos que 
 
 Valoración media por 'Release_Year', de mayor a menor:
 
+```{r}
+id_year <- group_by(scores, MovieID) %>% 
+  summarise(Release_Year = unique(Release_Year)) 
+movies_per_year <- id_year %>% group_by(Release_Year) %>% 
+  summarise(Count_Movies = n_distinct(MovieID))
+which(movies_year$Release_Year==2000)
+summary(movies_per_year)
+```
+El año que se estrenaron más películas se estrenaron 25 y en un 50% de los años se estrenaron como mucho 2 pelis.(tener en cuanta que esto es siempre sobre nuestra 250)
+
+```{r}
+ggplot(data=movies_per_year) + #sistema de coordenadas al que añadir puntos(creates an empty graph)
+  geom_point(mapping=aes(Release_Year, Count_Movies), color='blue', fill='red', shape=21) +
+  ggtitle('Distribución del número de películas por año de publicación')
+
+ggplot(data=id_year) + 
+  geom_bar(mapping=aes(x=Release_Year), stat='count', color='blue') +
+  ggtitle('Distribución del número de películas por año de publicación')
+```
+
+
 ```{r, warning=FALSE, message=FALSE}
 release_year_score_avg <- scores %>%
   group_by(Release_Year) %>%
