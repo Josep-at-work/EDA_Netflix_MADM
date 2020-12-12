@@ -24,10 +24,12 @@ library(tidyverse)
 library(knitr)
 library(here) #permite ejecutar este rmd desde cualquier carpeta
 library(timeDate)
+library(modeest)
+library(lubridate)
 library(magrittr) #permite hacer pipes en ambos sentidos
 
-rm(list=ls())
-cat("\014")
+#rm(list=ls())
+#cat("\014")
 ```
 
 # Objetivo
@@ -94,7 +96,7 @@ for(i in 1:nrow(pelis)){
 
 Guardamos un csv con solo nuestras 250 películas en el formato original
 ```{}
-write_csv(scores,"nuestras_pelis_raw.csv")
+write_csv(scores, here("Data", "nuestras_pelis_raw.csv"))
 ```
 
 **Carga archivo puntuaciones de nuestras 250 películas**
@@ -144,8 +146,6 @@ scores %<>% relocate(MovieID, UserID, Date, Score)
 #Asignación del tipo de dato
 scores %<>% mutate(across(c(MovieID:UserID, Score), as.integer))
 scores %<>% mutate(Date = as.Date(Date))
-#para separar Date en año més día
-scores %<>% mutate(Date_copy = Date)  %>% separate(Date_copy, into = c("Year", "Month", "Day"), sep = "-")
 ```
 
 
@@ -168,13 +168,13 @@ summary(scores)
 kable(head(scores))
 ```
 
+### Exportación datos limpios
 Exportamos el archivo csv limpio para trabajar con el a partir de ahora
 ```{}
-setwd("~/Developer/GitHub/proyecto-netflix-movies-madm/Data")
-write_csv(scores,"nuestras_pelis.csv")
+write_csv(scores,here("Data", "nuestras_pelis.csv"))
 ```
 
-
+### Importación datos limpios para analizar en la sección Estadística Descriptiva
 ```{r message=FALSE, warning=FALSE}
 scores = read_csv(here("Data","nuestras_pelis.csv"))
 
@@ -195,26 +195,26 @@ table(scores$Score) # frecuencia puntuaciones
 table(head(scores$MovieID)) # frecuencia title
 ```
 
-
+## Pregunta 1
 1. Justifica para cada una de las variables de la tabla anterior el tipo de dato que mejor se ajusta a cada una de ellas: numérico, ordinal, categórico. . . .
 
 ```{r}
 glimpse(scores)
 ```
-### Variables tipo _int_: MovieID, CustomerID, Score, Release_Year
+**Variables tipo _int_: MovieID, CustomerID, Score, Release_Year**
 - _UserID_: _<int>_ Contiene un número entero, estos son objetos que contienen un único campo, un identificado ID para cada cliente, no queremos duplicados. 
 - _MovieID_: _<int>_ Contiene un número entero, estos son objetos que contienen un único campo, un identificado ID para cada película, no queremos duplicados. Un integer es inmutable.
 - _Release_Year_: _<int>_ No existen años con decimales, por lo tanto utilizar variables para datos enteros seria suficiente.
 Movie_title: chr. Utilizamos el tipo carácter porque nos interesan objetos que representan un conjunto de letras.
 - _Score_: _<int>_ Las puntuaciones son números enteros del 1 al 5. Las películas no aceptan decimales como puntuación.
 
-### Variables tipo _date_: Date
+**Variables tipo _date_: Date**
 - _Date_ : _<date>_ esta variable incluye datos de tipo fecha (YY/MM/DD) por ello lo más adecuado es tratarlo como una variable de este tipo. Gracias a esto, podemos aplicar paquetes como _lubridate_ para manipular fechas.
 
-### Variables tipo _chr_: Title
+**Variables tipo _chr_: Title**
 - _Title_: Utilizamos el tipo carácter porque nos interesan objetos que representan un conjunto de letras.
 
-
+## Pregunta 2
 2. Estudia la distribución del numero de películas estrenadas por año. Realiza un gráfico de muestre esta distribución haciendo los ajustes necesarios (agrupaciones, cambios de escala, transformaciones. . . )
 
 Valoración media por 'Release_Year', de mayor a menor:
@@ -224,7 +224,7 @@ id_year <- group_by(scores, MovieID) %>%
   summarise(Release_Year = unique(Release_Year)) 
 movies_per_year <- id_year %>% group_by(Release_Year) %>% 
   summarise(Count_Movies = n_distinct(MovieID))
-which(movies_year$Release_Year==2000)
+which(movies_per_year$Release_Year==2000)
 summary(movies_per_year)
 ```
 El año que se estrenaron más películas se estrenaron 25 y en un 50% de los años se estrenaron como mucho 2 pelis.(tener en cuanta que esto es siempre sobre nuestra 250)
@@ -249,60 +249,65 @@ release_year_score_avg <- scores %>%
 kable(head(release_year_score_avg))
 ```
 
-3. Investiga la librería lubridate (o la que consideréis para manipulación de datos) y utilízala para
-transformar la columna de la fecha de la valoración en varias columnas por ejemplo year,month, week,
-day_of_week.
+## Pregunta 3
+3. Investiga la librería lubridate (o la que consideréis para manipulación de datos) y utilízala para transformar la columna de la fecha de la valoración en varias columnas por ejemplo year, month, week, day_of_week.
 
 Valoración media por día de la semana, de mayor a menor:
 
 ```{r, warning=FALSE, message=FALSE}
 
-scores_day_week <- scores %>% mutate(Day_Week = weekdays(Date))
-scores_day_week %<>% mutate(Is_Weekend = isWeekend(Date))
+scores %<>% mutate(
+  Year = year(Date), 
+  Month = month(Date), 
+  Week = week(Date), 
+  Day = day(Date), 
+  Day_Week = wday(Date, 
+                  label = TRUE,
+                  abbr = TRUE,
+                  week_start = getOption("lubridate.week.start", 7)
+                  ),
+  Is_Weekend = isWeekend(Date)
+  )
 
-day_week_score_avg <- scores_day_week %>%
-  group_by(Day_Week) %>%
-  summarise(Mean_Score = mean(Score), n = n()) %>%
-  arrange(desc(Mean_Score))
-
-kable(day_week_score_avg)
 ```
 
 Valoración media entre semana / fin de semana:
   
 ```{r, warning=FALSE, message=FALSE}
-weekend_weekday_score_avg <- scores_day_week %>%
+weekend_weekday_scores <- scores %>%
   group_by(Is_Weekend) %>%
   summarise(Mean_Score = mean(Score), n = n())
 
-kable(weekend_weekday_score_avg)
+kable(weekend_weekday_scores)
 
-n_scores_weekend = weekend_weekday_score_avg  %>% filter(Is_Weekend == TRUE) %>% select(n)
-n_scores = sum(weekend_weekday_score_avg$n)
+n_scores_weekend = weekend_weekday_scores  %>% filter(Is_Weekend == TRUE) %>% select(n)
+n_scores = sum(weekend_weekday_scores$n)
 n_scores_weekend_weekday_ratio = n_scores_weekend / n_scores #el 18% de las valoraciones son en fin de semana, que es menos que el 28% de días que son fin de semana
 ```
 
-
+## Pregunta 4
 4. Genera un tabla que para cada película nos dé el número total de valoraciones, la suma de las valoraciones, la media las valoraciones, y otras estadísticos de interés (desviación típica, moda , mediana).
 
 Valoración media por película, de mayor a menor:
 
 ```{r, warning=FALSE, message=FALSE}
-movie_score_avg <- scores %>%
+movie_scores <- scores %>%
   group_by(MovieID) %>%
-  summarise(Mean_Score = mean(Score), n = n()) %>%
-  left_join(titles, by = 'MovieID') %>%
-  arrange(desc(Mean_Score))
+  summarise(Sum_Score = sum(Score), Mean_Score = mean(Score), SD_Score = sd(Score), Mode_Score = mlv(Score), Median_Score = median(Score) , n = n()) %>%
+  left_join(titles, by = 'MovieID')
 
-kable(head(movie_score_avg))
+kable(head(movie_scores %>% arrange(desc(Mean_Score))))
+
+kable(head(movie_scores %>% arrange(desc(n))))
   
 ```
 
+## Pregunta 5
 5. De las cinco películas con más número total de valoraciones, compara sus estadísticos y distribuciones
 (histogramas, boxplot, violin plot,. . . )
 
 ```{r, include=FALSE}
-sample = head(movie_score_avg[order(movie_score_avg$n, decreasing = TRUE),],5)
+sample = head(movie_scores[order(movie_scores$n, decreasing = TRUE),],5)
 #sample
 ```
 
@@ -381,7 +386,7 @@ ggplot(sample) +
 ```
 
 
-###Histograma
+**Histograma**
 ```{r}
 library(ggplot2)
 ```
@@ -398,21 +403,35 @@ hist(x = sample$Mean_Score, main = "Histograma de
      xlab = "Valoraciones", ylab = "Frecuencia", col = 'chocolate1')
 ```
 
-###ggplot
+**ggplot**
 ```{r}
 ggplot(data = sample, aes(x = Release_Year), main = Años) + geom_bar()
 ```
 
-6. Investiga la distribución de valoraciones por día de la semana y por mes.¿Qué meses y días de la semana
-se valoran más películas en netflix?
+## Pregunta 6
+6. Investiga la distribución de valoraciones por día de la semana y por mes.¿Qué meses y días de la semana se valoran más películas en netflix?
 
+```{r}
+month_scores <- scores %>%
+  group_by(Month) %>%
+  summarise(Mean_Score = mean(Score), n = n())
+
+day_week_scores <- scores %>%
+  group_by(Day_Week) %>%
+  summarise(Mean_Score = mean(Score), n = n())
+
+kable(month_scores %>% arrange(desc(n)))
+kable(day_week_scores %>% arrange(desc(n)))
+```
+
+## Pregunta 7
 7. Genera una tabla agrupada por película y año del número de valoraciones. Representa la tabla gráficamente para de las 10 películas con mayor número de valoraciones .
 
+## Pregunta 8
 8. Distribución del score promedio por año de las 10 películas con mayor número de valoraciones.
 
+## Pregunta 9
 9. Realiza algún gráfico o estudió de estadísticos adicional que consideres informativo en base al análisis exploratorio anterior.
-
-
 
 
 
@@ -424,14 +443,6 @@ se valoran más películas en netflix?
     6. Series temporales de puntuaciones
     7. Distribución de cuantos usuarios evaluan cuantas pelis totales y diferentes
     
-
-
-
-
-
-
-
-
 
 
 # Sistema de Recomendación / Similaridad (opcional)
