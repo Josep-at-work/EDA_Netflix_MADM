@@ -18,8 +18,11 @@ urlcolor: blue
 \fontsize{8}{8}
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
 library(tidyverse)
 library(knitr)
 library(here) #permite ejecutar este rmd desde cualquier carpeta
@@ -28,6 +31,10 @@ library(modeest)
 library(lubridate)
 library(magrittr) #permite hacer pipes en ambos sentidos
 library(extrafont) #cambiar fuente graficos
+library(treemapify)
+library(ggplot2)
+library(ggcorrplot)
+library(DescTools)
 
 #rm(list=ls())
 #cat("\014")
@@ -56,7 +63,7 @@ The first line of each file contains the movie id followed by a colon. Each subs
 **Selección de 250 películas de manera aleatoria**
 Utilizamos el código de Ricardo para seleccionar nuestras 250 peliculas con las siguientes modificaciones:
 
-```{r}
+```{r eval=FALSE, message=TRUE, warning=TRUE, include=TRUE}
 filas_ID_combined_all = read.csv(here("Data","filas_ID_combined_all.txt"))
 set.seed(081034)
 n_filas = nrow(filas_ID_combined_all)
@@ -256,19 +263,26 @@ kable(head(release_year_score_avg))
 Valoración media por día de la semana, de mayor a menor:
 
 ```{r, warning=FALSE, message=FALSE}
-
 scores %<>% mutate(
   Year = year(Date), 
-  Month = month(Date), 
+  n_month = month(Date),
   Week = week(Date), 
   Day = day(Date), 
-  Day_Week = wday(Date, 
-                  label = TRUE,
-                  abbr = TRUE,
-                  week_start = getOption("lubridate.week.start", 7)
+  n_day_week = wday(Date,
+                  week_start = getOption("lubridate.week.start", 1)
                   ),
-  Is_Weekend = isWeekend(Date)
+  Is_Weekend = if_else( isWeekend(Date) == TRUE, "Weekend", "Weekday" ) 
   )
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+#Generamos una variable `Month`
+scores %<>% mutate(
+  Month = ordered(n_month, levels = seq(1, 12, 1),labels = month.abb),
+  Day_Week = ordered(n_day_week, levels = seq(1, 7, 1), labels = day.abb)
+)
+
 
 ```
 
@@ -314,7 +328,6 @@ sample = head(movie_scores[order(movie_scores$n, decreasing = TRUE),],5)
 
 A continuación, representamos el top 5 películas en un `treemap`:
 ```{r, echo = FALSE}
-library(treemapify)
 
 (ptm<-ggplot(sample,aes(area=n,fill=Title,
                         subgroup = n, subgroup2 = round(Mean_Score,2),
@@ -367,7 +380,6 @@ ggplot(data = sample, aes(x = Mean_Score, y = Release_Year)) +
 
 Luego, vamos a observar si existe correlación entre estas variables: Observamos que las variables `n` (valoración absoluta) esta muy correlacionada con la `Mean_Score`, lo cual es lógico:
 ```{r, echo = FALSE}
-library(ggcorrplot)
 corr <- round(cor(sample[1:4]), 1) #excluir los títulos
 #como la matriz de correlación es simétrica, basta con graficar simplemente una parte de ella
 ggcorrplot(corr, method = 'circle', type = 'lower', lab = TRUE) +
@@ -388,9 +400,7 @@ ggplot(sample) +
 
 
 **Histograma**
-```{r}
-library(ggplot2)
-```
+
 
 ```{r, para n}
 par(bg="grey98", mar=c(3,3,3,3), mfcol=c(1,2))
@@ -412,7 +422,7 @@ ggplot(data = sample, aes(x = Release_Year), main = Años) + geom_bar()
 ## Pregunta 6
 6. Investiga la distribución de valoraciones por día de la semana y por mes.¿Qué meses y días de la semana se valoran más películas en netflix?
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 month_scores <- scores %>%
   group_by(Month) %>%
   summarise(Mean_Score = mean(Score), n = n())
@@ -423,7 +433,20 @@ day_week_scores <- scores %>%
 
 kable(month_scores %>% arrange(desc(n)))
 kable(day_week_scores %>% arrange(desc(n)))
+
 ```
+
+```{r}
+ggplot(data = month_scores, aes(x = Month, y = n)) +
+  geom_bar(stat = "identity") +
+  scale_x_discrete(drop = FALSE, breaks = levels(scores$Month))
+
+ggplot(data = day_week_scores, aes(x = Day_Week, y = n)) +
+  geom_bar(stat = "identity") +
+  scale_x_discrete(drop = FALSE, breaks = levels(scores$Day_Week))
+```
+
+
 
 ## Pregunta 7
 7. Genera una tabla agrupada por película y año del número de valoraciones. Representa la tabla gráficamente para de las 10 películas con mayor número de valoraciones .
@@ -446,9 +469,11 @@ ggplot() +
           con mayor número de valoraciones") +
   #theme(plot.title = element_text(size = 10, face = "bold", family = 'Century')) + 
   xlab('Puntuación media') +
-  ylab('Año de estreno') +
-  theme_bw() +
-  theme(text=element_text(family="Broadway", face="bold", size=10))
+  ylab('Año de estreno')
+
+#+
+ # theme_bw() +
+  #theme(text=element_text(family="Broadway", face="bold", size=10))
 ```
 
 
