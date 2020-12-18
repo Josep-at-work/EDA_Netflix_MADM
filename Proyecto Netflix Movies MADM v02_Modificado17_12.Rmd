@@ -225,7 +225,7 @@ Movie_title: chr. Utilizamos el tipo carácter porque nos interesan objetos que 
 - _Title_: Utilizamos el tipo carácter porque nos interesan objetos que representan un conjunto de letras.
 
 ## Pregunta 2
-2. Estudia la distribución del numero de películas estrenadas por año. Realiza un gráfico de muestre esta distribución haciendo los ajustes necesarios (agrupaciones, cambios de escala, transformaciones. . . )
+2. Estudia la distribución del numero de películas estrenadas por año. Realiza un gráfico que muestre esta distribución haciendo los ajustes necesarios (agrupaciones, cambios de escala, transformaciones. . . )
 
 Valoración media por 'Release_Year', de mayor a menor:
 
@@ -234,10 +234,11 @@ id_year <- group_by(scores, MovieID) %>%
   summarise(Release_Year = unique(Release_Year)) 
 movies_per_year <- id_year %>% group_by(Release_Year) %>% 
   summarise(Count_Movies = n_distinct(MovieID))
-which(movies_per_year$Release_Year==2000)
+
 summary(movies_per_year)
+movies_per_year[which(movies_per_year$Count_Movies==25),]
 ```
-El año que se estrenaron más películas se estrenaron 25 y en un 50% de los años se estrenaron como mucho 2 pelis.(tener en cuanta que esto es siempre sobre nuestra 250)
+El año que se estrenaron más películas fue el 2000 y se estrenaron 25 y en un 50% de los años se estrenaron como mucho 2 pelis. Tener en cuenta que esto es sobre una muestra de un `r 100*250/17770`% del total de las películas de netflix. 
 
 ```{r}
 ggplot(data=movies_per_year) + #sistema de coordenadas al que añadir puntos(creates an empty graph)
@@ -247,6 +248,9 @@ ggplot(data=movies_per_year) + #sistema de coordenadas al que añadir puntos(cre
 ggplot(data=id_year) + 
   geom_bar(mapping=aes(x=Release_Year), stat='count', color='blue') +
   ggtitle('Distribución del número de películas por año de publicación')
+
+ggplot(data=id_year, aes(x=Release_Year)) +
+  geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8)
 ```
 
 
