@@ -59,17 +59,15 @@ gg3 <- ggplot(q3, aes(x = Month, y = Score, fill = Month)) +
   theme_bw()
 print(gg3)
 
+#####################QUÉ PELÍCULAS HAN EVALUADO LOS 5 USUARIOS########################
 #número de veces que ha votado cada usuario
 num_votos_por_usuario = aggregate(scores$UserID, by = list(Usuario=scores$UserID), length)
-class(num_votos_por_usuario)
-sort(num_votos_por_usuario)
 
 #Los cinco usuarios que más películas han evaluado, qué peliculas son y qué notas les han dado:
 
-top_5_users= head(num_votos_por_usuario[order(num_votos_por_usuario$x, decreasing = TRUE),],5)
-top_5_users # 305344 , 387418, 2439493, 1664010, 2118461.
+#top_5_users= head(num_votos_por_usuario[order(num_votos_por_usuario$x, decreasing = TRUE),],5)
+#top_5_users # 305344 , 387418, 2439493, 1664010, 2118461.
 
-#####################QUÉ PELÍCULAS HAN EVALUADO LOS 5 USUARIOS########################
 
 ##idea: qué pelicula ha sido la menos evaluada
 
@@ -141,4 +139,19 @@ Dif_1_5= top_pelis_1 %>%
   filter(comp5 %in% c('0')) #░obtener las que no aparecen
 Dif_1_5 
 
+#Otra manera de obtener cuantas veces puntua cada usuario
 
+df <- scores %>% group_by(UserID) %>% count()
+df <- scores %>% group_by(UserID) %>% summarise(NN = n())
+df <- scores %>% group_by(UserID) %>% 
+  summarise(NN = n(), percent = n()/nrow(.) ) #Añadir a la tabla el % que representa cada país en el Total
+df <- scores %>% group_by(UserID) %>%
+  summarise (NN = n()) %>%
+  mutate(percent= NN / sum(NN))
+top_5_users <- head(df[order(df$NN, decreasing = TRUE),],5)
+knitr::kable(top_5_users)
+
+
+#puntuacion media total estos clientes:
+  #df <- scores %>%  group_by(UserID, Score) %>% 
+  #summarise(Score_medio = mean(Score, na.rm = TRUE)) %>% ungroup() 
