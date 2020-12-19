@@ -37,6 +37,7 @@ library(ggcorrplot)
 library(DescTools)
 library(RColorBrewer) #Paleta de colores
 library(plotly)       #Graficos interactivos
+library(dplyr) #relacionar dataframes
 
 rm(list=ls())
 cat("\014")
@@ -587,7 +588,109 @@ par(mfrow = c(1,1))
 
 Observando estos resultados, podemos saber qué mes recoge las puntuaciones más altas. En el primer escenario (1Q) es enero, en el segundo escenario (2Q) es agosto y en el tercer escenario (3Q) es octubre.
 
+### Buscar los top 5 usuarios que más películas han puntuado. Luego, comparar con el top 1 usuario qué películas han dejado de evaluar el resto.
 
+Primero vamos a buscar el número de total de películas que han sido evaluadas por usuario: 
+
+```{r}
+#número de veces que ha votado cada usuario
+num_votos_por_usuario = aggregate(scores$UserID, by = list(Usuario=scores$UserID), length)
+```
+
+En segundo lugar, seleccionaremos el *top 5 usuarios* que más películas han puntuado,
+```{r}
+df <- scores %>% group_by(UserID) %>% count()
+df <- scores %>% group_by(UserID) %>% summarise(NN = n())
+df <- scores %>% group_by(UserID) %>% 
+  summarise(NN = n(), percent = n()/nrow(.) ) #Añadir a la tabla el % que representa cada país en el Total
+df <- scores %>% group_by(UserID) %>%
+  summarise (NN = n()) %>%
+  mutate(percent= NN / sum(NN))
+top_5_users <- head(df[order(df$NN, decreasing = TRUE),],5)
+knitr::kable(top_5_users, digits = 5, align = "c", caption = "Top 5 Usuarios")
+```
+
+En tercer lugar, buscaremos qué películas han sido evaluadas por estos usuarios. Seguidamente, compararemos el total de películas evaluadas por el usuario `top_1` con el resto:
+```{r}
+##top_pelis_1
+top_pelis_1 = scores %>% 
+  filter(UserID %in% c('305344'))
+
+##top_pelis_2
+top_pelis_2 = scores %>% 
+  filter(UserID %in% c('387418'))
+
+##top_pelis_3
+top_pelis_3 = scores %>% 
+  filter(UserID %in% c('2439493'))
+
+##top_pelis_4
+top_pelis_4 = scores %>% 
+  filter(UserID %in% c('1664010'))
+
+##top_pelis_5
+top_pelis_5 = scores %>% 
+  filter(UserID %in% c('2118461'))
+```
+
+El usuario que más películas ha puntuado es el _305344_, entonces vamos a comparar el resto de usuarios con este:
+
+```{r}
+top_pelis_1$comp2 <- as.integer(top_pelis_1$MovieID %in% top_pelis_2$MovieID)
+top_pelis_1$comp3 <- as.integer(top_pelis_1$MovieID %in% top_pelis_3$MovieID)
+top_pelis_1$comp4 <- as.integer(top_pelis_1$MovieID %in% top_pelis_4$MovieID)
+top_pelis_1$comp5 <- as.integer(top_pelis_1$MovieID %in% top_pelis_5$MovieID)
+Dif_1_2= top_pelis_1 %>% 
+           filter(comp2 %in% c('0'))
+Dif_1_3= top_pelis_1 %>% 
+  filter(comp3 %in% c('0')) #░obtener las que no aparecen
+Dif_1_4= top_pelis_1 %>% 
+  filter(comp4 %in% c('0')) #░obtener las que no aparecen
+Dif_1_5= top_pelis_1 %>% 
+  filter(comp5 %in% c('0')) #░obtener las que no aparecen
+```
+
+Películas que el `top_2` no ha evaluado pero el `top_1` si lo ha hecho:
+```{r}
+films_2 = Dif_1_2$Title
+```
+
+Películas que el `top_3` no ha evaluado pero el `top_1` si lo ha hecho:
+
+```{r}
+films_3 = Dif_1_3$Title
+```
+
+Películas que el `top_4` no ha evaluado pero el `top_1` si lo ha hecho:
+
+```{r}
+films_4 = Dif_1_4$Title
+```
+
+
+Películas que el `top_5` no ha evaluado pero el `top_1` si lo ha hecho:
+ 
+```{r}
+films_5 = Dif_1_5$Title
+```
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
     2. Puntuaciones por película
     3. Puntuaciones por usuario
     4. Número de puntuaciones por película, usuario y año lanzamiento
