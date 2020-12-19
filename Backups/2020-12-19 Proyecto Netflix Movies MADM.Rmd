@@ -1,0 +1,713 @@
+---
+title: "Proyecto Netflix Movies MADM"
+author: "Laura Moreno, Josep Roman, Paul Ramírez"
+date: "11/28/2020"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+    toc: yes
+    number_sections: yes
+  html_document:
+    toc: yes
+    number_sections: yes
+linkcolor: red
+header-includes: \renewcommand{\contentsname}{Contenidos}
+citecolor: blue
+toccolor: blue
+urlcolor: blue
+always_allow_html: true
+---
+\fontsize{8}{8}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+library(tidyverse)
+library(knitr)
+library(here)        #Permite ejecutar este rmd desde cualquier carpeta
+library(timeDate)
+library(modeest)
+library(lubridate)
+library(magrittr)    #Permite hacer pipes en ambos sentidos
+library(extrafont)   #Cambiar fuente graficos
+library(treemapify)
+library(ggplot2)
+library(ggcorrplot)
+library(DescTools)
+library(RColorBrewer) #Paleta de colores
+library(plotly)       #Graficos interactivos
+library(dplyr) #relacionar dataframes
+#library(webshot)
+#webshot::install_phantomjs()
+
+rm(list=ls())
+cat("\014")
+```
+
+# Objetivo
+
+
+# Data Wrangle
+
+## Importación de datos
+
+### Importación datos puntuaciones películas
+
+**Info de los archivos "combined_data_.txt"**
+The first line of each file contains the movie id followed by a colon. Each subsequent line in the file corresponds to a rating from a customer and its date in the following format:
+
+  UserID,Rating,Date  
+  
+  * MovieIDs range from 1 to 17770 sequentially.
+  * UserIDs range from 1 to 2649429, with gaps. There are 480189 users.
+  * Ratings are on a five star (integral) scale from 1 to 5.
+  * Dates have the format YYYY-MM-DD.  
+  
+  
+**Selección de 250 películas de manera aleatoria**
+Utilizamos el código de Ricardo para seleccionar nuestras 250 peliculas con las siguientes modificaciones:
+
+```{r eval=FALSE, message=TRUE, warning=TRUE, include=TRUE}
+filas_ID_combined_all = read.csv(here("Data","filas_ID_combined_all.txt"))
+set.seed(081034)
+n_filas = nrow(filas_ID_combined_all)
+muestra_grupo = sample(1:n_filas, 250, replace=F)
+pelis <- filas_ID_combined_all[as.vector(muestra_grupo),] 
+```
+
+
+Cargamos los 4 archivos originales con las puntuaciones:
+```{}
+attach(pelis)
+
+data1 = read_tsv(here("Raw data","combined_data_1.txt"),col_names = FALSE)
+data2 = read_tsv(here("Raw data","combined_data_2.txt"),col_names = FALSE)
+data3 = read_tsv(here("Raw data","combined_data_3.txt"),col_names = FALSE)
+data4 = read_tsv(here("Raw data","combined_data_4.txt"),col_names = FALSE)
+```
+
+Generamos un tibble vacío, y en función del archivo en el que se encuentre la pelicula, vamos añadiendo en `scores` las filas correspondientes a nuestras películas:
+```{echo=FALSE}
+scores = tibble()
+for(i in 1:nrow(pelis)){
+  if (data[i]==1){
+    scores = rbind(scores,data1[fila[i]:fila_final[i],])
+  }
+  else if (data[i]==2){
+    scores = rbind(scores,data2[fila[i]:fila_final[i],])
+  }
+  else if (data[i]==3){
+    scores = rbind(scores,data3[fila[i]:fila_final[i],])
+  }
+  else {
+    scores = rbind(scores,data4[fila[i]:fila_final[i],])
+  }
+}
+
+```
+
+Guardamos un csv con solo nuestras 250 películas en el formato original
+```{}
+write_csv(scores, here("Data", "nuestras_pelis_raw.csv"))
+```
+
+**Carga archivo puntuaciones de nuestras 250 películas**
+Cargamos el csv generado en el paso anterior:
+```{}
+aux = read_csv(here("Data", "nuestras_pelis_raw.csv"), col_names = T)
+```
+
+### Importación datos información sobre las películas
+
+**Carga archivo titulos películas**
+
+```{r, warning=FALSE, message=FALSE}
+#rm(titles)
+#algunas peliculas tienen una coma en su nombre, así que cargamos primero todo como una única columna, para luego dividirlo en 3, y hacer un merge la parte de los títulos despues de la coma
+titles = read_table(here("Data",'movie_titles_raw.csv'), col_names=F) %>%
+  separate(col = 1, into = c("MovieID", "Release_Year", "Title"), sep = ",", extra = "merge")
+```
+
+## Limpieza de los datos
+
+### Limpieza datos puntuaciones películas
+Aplicamos el código de Ricardo para limpiar el dataframe `aux` y pasar al dataframe `scores` con una fila para cada valoración de usuario
+
+```{echo=FALSE}
+scores = aux %>% mutate(fila=row_number())
+filas=grep(":",scores$X1)
+filas_ID= scores %>%
+  filter( fila %in% filas ) %>%
+  mutate(ID=as.integer(gsub(":","",X1)))
+reps=diff(c(filas_ID$fila,max(scores$fila)+1))
+
+scores %<>%
+  mutate(ID1=rep(filas_ID$X1,times=reps)) %>%
+  filter(!(fila %in% filas)) %>%
+  select(-fila) %>%
+  separate(X1,into=c("UserID","Score","Date"),sep=",") %>%
+  mutate(Score=as.integer(Score)) %>%
+  separate(col = ID1,into=c("MovieID","borrar")) %>%
+  select(-borrar) %>% mutate(MovieID=as.numeric(MovieID))
+```
+
+Reorganizamos variables y asignamos tipos de variable:
+```{}
+#Reorganización
+scores %<>% relocate(MovieID, UserID, Date, Score)
+#Asignación del tipo de dato
+scores %<>% mutate(across(c(MovieID:UserID, Score), as.integer))
+scores %<>% mutate(Date = as.Date(Date))
+```
+
+
+### Limpieza datos títulos películas
+```{r}
+head(titles)
+titles  %<>% mutate(across(c(MovieID:Release_Year), as.integer))
+```
+
+### Join de ´scores´ con ´titles´
+Hacemos un **left join con** de *scores* con *titles* para añadir a la primera los títulos de cada película y el año en que se publicaron
+
+- El `left_join` se queda con todas las observaciones que aparecen en el primer *dataset*, es decir, solo tendrá en cuenta las películas observadas en *scores*.
+
+- El `join` entre tablas lo hemos hecho con la columna `MovieID`, presente en ambas tablas. Tal y como vemos en la tabla `movies_titles.csv`, cada película tiene un `MovieID` único, lo que se conoce como _clave primaria_. No obstante, en la tabla `scores` cada MovieID puede ser puntuada por varios `UserID`, en este caso, la _clave primaria_ se constituye a partir de la combinación de ambas variables.
+
+```{}
+scores %<>% left_join(titles, by = 'MovieID')
+summary(scores)
+kable(head(scores))
+```
+
+### Exportación datos limpios
+Exportamos el archivo csv limpio para trabajar con el a partir de ahora
+```{}
+write_csv(scores,here("Data", "nuestras_pelis.csv"))
+```
+
+### Importación datos limpios para analizar en la sección Estadística Descriptiva
+```{r message=FALSE, warning=FALSE}
+scores = read_csv(here("Data","nuestras_pelis.csv"))
+
+# Cambiamos los tipos de variable necesarios
+scores %<>% mutate(across(c(MovieID,UserID,Score,Release_Year), as.integer))
+glimpse(scores) #para ver el tipo de dato
+```
+
+
+# Estadística Descriptiva
+
+Vemos que tenemos información de la peliculas 1 a la 15, y las puntuaciones se hicieron entre el 2000 y el 2005 (mayoritariamente en 2005). Distribución de los meses y dias en que se puntuo es uniforme. 
+
+Veamos más informacion sobre los datos:
+```{r, warning=FALSE, message=FALSE}
+length(unique(scores$UserID)) #20537 usuarios distintos
+table(scores$Score) # frecuencia puntuaciones
+table(head(scores$MovieID)) # frecuencia title
+```
+
+## Pregunta 1
+1. Justifica para cada una de las variables de la tabla anterior el tipo de dato que mejor se ajusta a cada una de ellas: numérico, ordinal, categórico. . . .
+
+```{r}
+glimpse(scores)
+```
+**Variables tipo _int_: MovieID, CustomerID, Score, Release_Year**
+- _UserID_: _<int>_ Contiene un número entero, estos son objetos que contienen un único campo, un identificado ID para cada cliente, no queremos duplicados. 
+- _MovieID_: _<int>_ Contiene un número entero, estos son objetos que contienen un único campo, un identificado ID para cada película, no queremos duplicados. Un integer es inmutable. No obstante, cuando creemos gráficas los vamos a transformar a _chr_ para evitar que los ejes escalen los números.
+- _Release_Year_: _<int>_ No existen años con decimales, por lo tanto utilizar variables para datos enteros seria suficiente.
+Movie_title: chr. Utilizamos el tipo carácter porque nos interesan objetos que representan un conjunto de letras.
+- _Score_: _<int>_ Las puntuaciones son números enteros del 1 al 5. Las películas no aceptan decimales como puntuación.
+
+**Variables tipo _date_: Date**
+- _Date_ : _<date>_ esta variable incluye datos de tipo fecha (YY/MM/DD) por ello lo más adecuado es tratarlo como una variable de este tipo. Gracias a esto, podemos aplicar paquetes como _lubridate_ para manipular fechas.
+
+**Variables tipo _chr_: Title**
+- _Title_: Utilizamos el tipo carácter porque nos interesan objetos que representan un conjunto de letras.
+
+## Pregunta 2
+2. Estudia la distribución del numero de películas estrenadas por año. Realiza un gráfico que muestre esta distribución haciendo los ajustes necesarios (agrupaciones, cambios de escala, transformaciones. . . )
+
+Valoración media por 'Release_Year', de mayor a menor:
+
+```{r}
+id_year <- group_by(scores, MovieID) %>% 
+  summarise(Release_Year = unique(Release_Year)) 
+movies_per_year <- id_year %>% group_by(Release_Year) %>% 
+  summarise(Count_Movies = n_distinct(MovieID))
+
+summary(movies_per_year)
+movies_per_year[which(movies_per_year$Count_Movies==25),]
+```
+El año que se estrenaron más películas fue el 2000 y se estrenaron 25 y en un 50% de los años se estrenaron como mucho 2 pelis. Tener en cuenta que esto es sobre una muestra de un `r 100*250/17770`% del total de las películas de netflix. 
+
+```{r}
+ggplot(data=movies_per_year) + #sistema de coordenadas al que añadir puntos(creates an empty graph)
+  geom_point(mapping=aes(Release_Year, Count_Movies), color='blue', fill='red', shape=21) +
+  ggtitle('Distribución del número de películas por año de publicación')
+
+ggplot(data=id_year) + 
+  geom_bar(mapping=aes(x=Release_Year), stat='count', color='blue') +
+  ggtitle('Distribución del número de películas por año de publicación')
+
+ggplot(data=id_year, aes(x=Release_Year)) +
+  geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8)
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+release_year_score_avg <- scores %>%
+  group_by(Release_Year) %>%
+  summarise(Mean_Score = mean(Score), n = n()) %>%
+  arrange(desc(Mean_Score))
+
+kable(head(release_year_score_avg))
+```
+
+## Pregunta 3
+3. Investiga la librería lubridate (o la que consideréis para manipulación de datos) y utilízala para transformar la columna de la fecha de la valoración en varias columnas por ejemplo year, month, week, day_of_week.
+
+Valoración media por día de la semana, de mayor a menor:
+
+```{r, warning=FALSE, message=FALSE}
+scores %<>% mutate(
+  Year = year(Date), 
+  n_month = month(Date),
+  Week = week(Date), 
+  Day = day(Date), 
+  n_day_week = wday(Date,
+                  week_start = getOption("lubridate.week.start", 1)
+                  ),
+  Is_Weekend = if_else( isWeekend(Date) == TRUE, "Weekend", "Weekday" ) 
+  )
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+#Generamos una variable `Month`
+scores %<>% mutate(
+  Month = ordered(n_month, levels = seq(1, 12, 1),labels = month.abb),
+  Day_Week = ordered(n_day_week, levels = seq(1, 7, 1), labels = day.abb)
+)
+
+
+```
+
+Valoración media entre semana / fin de semana:
+  
+```{r, warning=FALSE, message=FALSE}
+weekend_weekday_scores <- scores %>%
+  group_by(Is_Weekend) %>%
+  summarise(Mean_Score = mean(Score), n = n())
+
+kable(weekend_weekday_scores)
+
+n_scores_weekend = weekend_weekday_scores  %>% filter(Is_Weekend == TRUE) %>% select(n)
+n_scores = sum(weekend_weekday_scores$n)
+n_scores_weekend_weekday_ratio = n_scores_weekend / n_scores #el 18% de las valoraciones son en fin de semana, que es menos que el 28% de días que son fin de semana
+```
+
+## Pregunta 4
+4. Genera un tabla que para cada película nos dé el número total de valoraciones, la suma de las valoraciones, la media las valoraciones, y otras estadísticos de interés (desviación típica, moda , mediana).
+
+Valoración media por película, de mayor a menor:
+
+```{r, warning=FALSE, message=FALSE}
+movie_scores <- scores %>%
+  group_by(MovieID) %>%
+  summarise(Sum_Score = sum(Score), Mean_Score = mean(Score), SD_Score = sd(Score), Mode_Score = mlv(Score), Median_Score = median(Score) , n = n()) %>%
+  left_join(titles, by = 'MovieID')
+
+kable(head(movie_scores %>% arrange(desc(Mean_Score))))
+
+kable(head(movie_scores %>% arrange(desc(n))))
+  
+```
+
+## Pregunta 5
+5. De las cinco películas con más número total de valoraciones, compara sus estadísticos y distribuciones
+(histogramas, boxplot, violin plot,. . . )
+```{r, include=FALSE}
+sample = head(movie_scores[order(movie_scores$n, decreasing = TRUE),],5)
+#sample
+```
+
+A continuación, representamos el top 5 películas en un `treemap`:
+```{r, echo = FALSE}
+
+(ptm<-ggplot(sample,aes(area=n,fill=Title,
+                        subgroup = n, subgroup2 = round(Mean_Score,2),
+                    label=Title))+
+    ggtitle('Top 5 películas')+
+    labs(caption = "Selección según el valor absoluto")+
+    geom_treemap(color = '#A67B5B') +
+    theme(legend.title = element_blank(),
+          legend.position = "none")+
+    geom_treemap_subgroup_text(place = "bottomright", 
+                      grow = F,
+                      alpha = 0.9,
+                      size = 7) +
+    geom_treemap_subgroup2_text(place = "bottomleft", 
+                               grow = F,
+                               alpha = 0.9,
+                               size = 8) +
+  geom_treemap_text(place = "centre",
+                             grow = F,
+                             alpha = 1,
+                             colour = "#FAFAFA",
+                            size = 10) +
+    geom_treemap_subgroup_border(colour="black",size=1)+
+    geom_treemap_subgroup2_border(colour="black",size=1)+
+    theme(plot.background = element_rect(fill = "#FFFEF2")) )
+```
+
+Primero, vamos a comparar los estadísticos de estas cinco películas mediante un *boxplot* y un *histograma*:
+```{r}
+par(bg="grey98", mar=c(3,3,3,3), mfcol=c(1,2))
+top5 = scores %>% 
+  filter(MovieID %in% c('6037', '8387' , '10730' , '313', '9645'))
+
+pl <- ggplot(top5, aes(x = Score, y = Release_Year, fill = factor(MovieID)))
+pl + geom_boxplot() + theme_bw() + coord_flip() + labs(fill = "Year", title = 'Boxplot de la puntuación por película y año de estreno')+
+  scale_y_continuous(breaks = seq(1999, 2005, 1))
+
+ggplot(top5, aes(x=top5$Score))+
+  geom_histogram(aes(y=..density..), position="identity", alpha=0.5) + 
+  geom_histogram(bins=5, color="black", fill="deepskyblue4",
+                 linetype="dashed") +
+  labs(title="Histograma puntuaciones top 5 películas",x="Scores", y = "Densidad")+
+  theme_bw()
+```
+En el *boxplot* se representan las cinco películas por año de estreno. Como muestra el gráfico, las películas se estrenaron entre el 2000 y el 2003 (excluyendo el 2001, donde no se produjo ningún estreno). De estas, la mayoria tienen su mediana en la puntuación 4, seria el caso de las películas con ID 313, 6037 y 8387 respectivamente. Luego, el resto tienen como mediana la puntuación 3.
+
+El histograma nos sirve para reforzar la afirmación anterior, vemos que la frecuencia de puntuaciones 3 y 4 son las más abundantes.
+
+Como alternativa al *boxplot*, se puede utilizar el +violin plot*. En este caso vamos a representar la puntuación otorgada por los usuarios a cada película:
+```{r, echo = FALSE}
+plot2 = ggplot(data = top5, aes(x = MovieID, y = Score)) + 
+  #geom_jitter(size = 1, color = 'gray', alpha = 0.5) + 
+  geom_violin(aes(fill = MovieID), color = 'black', alpha = 0.8) +
+  geom_boxplot(color = 'black', alpha = 0.7) + 
+  xlab('Identificador Película') + 
+  ylab('Puntuación') +
+  ggtitle('Puntuación de los usuarios según la película') + 
+  theme_bw()
+```
+```{r}
+plot2
+```
+
+
+Por último, estudiamos si existe relación entre la puntuación media y el año de estreno. Como podemos observar, no existe relación entre
+
+Luego, vamos a observar si existe correlación entre estas variables. Debido al tamaño de la muestra, no se puede establecer si existe o no relación.
+```{r, echo = FALSE}
+corr <- round(cor(top5[,-c(3,6:14)]), 1) #excluir los títulos
+#como la matriz de correlación es simétrica, basta con graficar simplemente una parte de ella
+ggcorrplot(corr, method = 'circle', type = 'lower', lab = TRUE) +
+  ggtitle("Correlograma del conjunto sample") +
+  theme_minimal() +
+  theme(legend.position="none")
+```
+
+## Pregunta 6
+6. Investiga la distribución de valoraciones por día de la semana y por mes.¿Qué meses y días de la semana se valoran más películas en netflix?
+
+```{r message=FALSE, warning=FALSE}
+month_scores <- scores %>%
+  group_by(Month) %>%
+  summarise(Mean_Score = mean(Score), n = n())
+
+day_week_scores <- scores %>%
+  group_by(Day_Week) %>%
+  summarise(Mean_Score = mean(Score), n = n())
+
+kable(month_scores %>% arrange(desc(n)))
+kable(day_week_scores %>% arrange(desc(n)))
+
+```
+
+```{r}
+ggplot(data = month_scores, aes(x = Month, y = n)) +
+  geom_bar(stat = "identity") +
+  scale_x_discrete(drop = FALSE, breaks = levels(scores$Month))
+
+ggplot(data = day_week_scores, aes(x = Day_Week, y = n)) +
+  geom_bar(stat = "identity") +
+  scale_x_discrete(drop = FALSE, breaks = levels(scores$Day_Week))
+```
+
+
+
+## Pregunta 7
+7. Genera una tabla agrupada por película y año del número de valoraciones. Representa la tabla gráficamente para las 10 películas con mayor número de valoraciones .
+
+```{r}
+table7.1 <- group_by(scores, MovieID, Year=year(Date)) %>%
+  summarise(votes = n_distinct((UserID)))                     #agrupamos por pelicula y año en que fue valorada
+
+table7.2 <- group_by(scores, MovieID) %>%
+  summarise(votes = n_distinct((UserID)))                     #agrupamos por pelicula
+
+top10 <- head(arrange(table7.2, desc(votes)), 10)             #las 10 más votadas
+
+movies_onfire <- filter(table7.1, MovieID %in% top10$MovieID) #onfire porque es un heatmap y son las pelis mas votadas
+for (i in 1:10) {
+  movie <- top10$MovieID[i]
+  indexes <- which(movies_onfire$MovieID == movie)
+  movies_onfire$MovieID <- replace(movies_onfire$MovieID, indexes, i)
+  count=i
+}                                                             #Ordenamos las pelis según el top10
+kable(top10)
+```
+Para visualizar la distribución de votaciones por año que obtubieron las 10 peliculas más votadas de *Netflix*, creamos un Heatmap
+```{r}
+# 1r creamos una secuencia significativa de intervalos
+# barplot(height = movies_onfire$votes, ylim =c(1,80000)) #Cambiando los limites de y que intervalos son significativos
+
+secuencia <- cut(movies_onfire$votes,
+                 breaks = c(min(movies_onfire$votes), 1000, 2000, 3000, 5000, 7000, 10000, 15000,
+                            20000, 25000, 30000,35000,40000,45000,50000,max(movies_onfire$votes)),
+                 labels=c('0<','1k-2k', '2k-3k', '3k-5k', '5k-7k', '7k-10k', '10k-15k', '15k-20k',
+                          '20k-25k', '25k-30k', '30k-35k', '35k-40k', '40k-45k', '45k-50k','>85k'),
+                 include.lowest = T) #15 values
+# 2n creamos una paleta de 15 colores
+library(RColorBrewer)
+nb.cols <- 15
+mycolors <- colorRampPalette(brewer.pal(9, "YlOrRd"))(nb.cols)
+
+# 3r creamos el Heatmap
+ggplot(movies_onfire, aes(text = paste('Votes:', votes), y = MovieID, x = Year )) +  #text para visualizar votos en el interactivo
+  geom_tile(aes(fill = secuencia)) +                  
+  scale_y_continuous(breaks=1:10) +             
+  scale_x_continuous(breaks=1999:2005) +
+  scale_fill_manual(values = mycolors) +              #secuencia de colores
+  labs(fill = 'Votes') -> hm                           #Legend name
+ggplotly(hm, tooltip = c('text', 'MovieID', 'Year'))
+
+```
+
+
+## Pregunta 8
+8. Distribución del score promedio por año de las 10 películas con mayor número de valoraciones.
+```{r, include = FALSE}
+#Elegir el TOP 10 películas con mayor número de valoraciones:
+ej_10 = head(movie_scores[order(movie_scores$n, decreasing = TRUE),],10)
+ej_10
+```
+
+```{r}
+ggplot() +
+  #geom_point(color = 'red', fill = 'red', size = 4, shape = 18, alpha = 0.5) +
+  geom_rug(data=ej_10, mapping=aes(x=Mean_Score), color="darkorange") +
+  geom_rug(data=ej_10, mapping=aes(y=Release_Year), color="darkmagenta") +
+  geom_point(data=ej_10, mapping=aes(x=Mean_Score, y=Release_Year), color = 'darkturquoise', fill = 'darkmagenta', size = 4, shape = 18, alpha = 0.5) +
+  ggtitle("Distribución del score promedio por año de las 10 películas
+          con mayor número de valoraciones") +
+  #theme(plot.title = element_text(size = 10, face = "bold", family = 'Century')) + 
+  xlab('Puntuación media') +
+  ylab('Año de estreno')
+
+#+
+ # theme_bw() +
+  #theme(text=element_text(family="Broadway", face="bold", size=10))
+```
+
+
+## Pregunta 9
+9. Realiza algún gráfico o estudió de estadísticos adicional que consideres informativo en base al análisis exploratorio anterior.
+
+
+
+    1. Puntuaciones por _quarter_
+En este apartado vamos a representar los meses que recogen mayores puntuaciones. Para observar mejor los resultados, hemos decidido dividir el estudio en tres escenarios diferentes. En primer lugar, el Q1 que comprende de enero a abril (ambos incluidos), y lo mismo con Q2 de mayo a agosto y, finalmente, Q3 de septiembre a diciembre.
+
+```{r, puntuaciones según quarters, echo = FALSE}
+##Primero me creo una tabla seleccionando los campos que quiero comparar
+cols <- c(4,13)
+newtab=scores[,cols]
+
+##Aquí tenemos los tres ``Q`` separados:
+Q1 = filter(newtab, Month == 'Jan' |Month == 'Feb' | Month == 'Mar' | Month == 'Apr')
+Q2 = filter(newtab, Month == 'May' | Month == 'Jun'| Month == 'Jul' | Month == 'Aug')
+Q3 = filter(newtab, Month == 'Sep' |Month == 'Oct' | Month == 'Nov' | Month == 'Dec')
+
+##Procedemos a realizar los gráficos pertinentes
+q1 <- aggregate(Q1$Score, by=list(Monthh=Q1$Month), FUN = sum)
+q1 <- as.data.frame(q1)
+names(q1) <- c("Month", "Score")
+gg1 <- ggplot(q1, aes(x = Month, y = Score, fill = Month)) + 
+  geom_col() +
+  geom_text(aes(label = Score), vjust = -0.5) +
+  scale_y_continuous(limit = c(0,500000,1000000,1500000, 2000000)) +
+  geom_bar(stat='identity') + geom_point() + expand_limits(x=0,y=0) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  scale_fill_manual(values=c("#003057", "#B52555", "#A0D1CA", "#7A99AC" )) +
+  ggtitle ("Puntuaciones totales del 1Q") +
+  theme_bw()
+
+q2 <- aggregate(Q2$Score, by=list(Monthh=Q2$Month), FUN = sum)
+q2 <- as.data.frame(q2)
+names(q2) <- c("Month", "Score")
+gg2 <- ggplot(q2, aes(x = Month, y = Score, fill = Month)) + 
+  geom_col() +
+  geom_text(aes(label = Score), vjust = -0.5)+
+  scale_y_continuous(limit = c(0,600000)) +
+  geom_bar(stat='identity') + geom_point() + expand_limits(x=0,y=0) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  scale_fill_manual(values=c("#003057", "#B52555", "#A0D1CA", "#7A99AC" )) +
+  ggtitle ("Puntuaciones totales del 2Q") +
+  theme_bw()
+
+q3 <- aggregate(Q3$Score, by=list(Monthh=Q3$Month), FUN = sum)
+q3 <- as.data.frame(q3)
+names(q3) <- c("Month", "Score")
+gg3 <- ggplot(q3, aes(x = Month, y = Score, fill = Month)) + 
+  geom_col() +
+  geom_text(aes(label = Score), vjust = -0.5)+
+  scale_y_continuous(limit = c(0,600000)) +
+  geom_bar(stat='identity') + geom_point() + expand_limits(x=0,y=0) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  scale_fill_manual(values=c("#003057", "#B52555", "#A0D1CA", "#7A99AC" )) +
+  ggtitle ("Puntuaciones totales del 3Q") +
+  theme_bw()
+```
+
+Este ha sido el resultado:
+
+```{r}
+par(mfrow = c(3,1))
+gg1
+gg2
+gg3
+par(mfrow = c(1,1))
+```
+
+Observando estos resultados, podemos saber qué mes recoge las puntuaciones más altas. En el primer escenario (1Q) es enero, en el segundo escenario (2Q) es agosto y en el tercer escenario (3Q) es octubre.
+
+### Buscar los top 5 usuarios que más películas han puntuado. Luego, comparar con el top 1 usuario qué películas han dejado de evaluar el resto.
+
+Primero vamos a buscar el número de total de películas que han sido evaluadas por usuario: 
+
+```{r}
+#número de veces que ha votado cada usuario
+num_votos_por_usuario = aggregate(scores$UserID, by = list(Usuario=scores$UserID), length)
+```
+
+En segundo lugar, seleccionaremos el *top 5 usuarios* que más películas han puntuado,
+```{r}
+df <- scores %>% group_by(UserID) %>% count()
+df <- scores %>% group_by(UserID) %>% summarise(NN = n())
+df <- scores %>% group_by(UserID) %>% 
+  summarise(NN = n(), percent = n()/nrow(.) ) #Añadir a la tabla el % que representa cada país en el Total
+df <- scores %>% group_by(UserID) %>%
+  summarise (NN = n()) %>%
+  mutate(percent= NN / sum(NN))
+top_5_users <- head(df[order(df$NN, decreasing = TRUE),],5)
+knitr::kable(top_5_users, digits = 5, align = "c", caption = "Top 5 Usuarios")
+```
+
+En tercer lugar, buscaremos qué películas han sido evaluadas por estos usuarios. Seguidamente, compararemos el total de películas evaluadas por el usuario `top_1` con el resto:
+```{r}
+##top_pelis_1
+top_pelis_1 = scores %>% 
+  filter(UserID %in% c('305344'))
+
+##top_pelis_2
+top_pelis_2 = scores %>% 
+  filter(UserID %in% c('387418'))
+
+##top_pelis_3
+top_pelis_3 = scores %>% 
+  filter(UserID %in% c('2439493'))
+
+##top_pelis_4
+top_pelis_4 = scores %>% 
+  filter(UserID %in% c('1664010'))
+
+##top_pelis_5
+top_pelis_5 = scores %>% 
+  filter(UserID %in% c('2118461'))
+```
+
+El usuario que más películas ha puntuado es el _305344_, entonces vamos a comparar el resto de usuarios con este:
+
+```{r}
+top_pelis_1$comp2 <- as.integer(top_pelis_1$MovieID %in% top_pelis_2$MovieID)
+top_pelis_1$comp3 <- as.integer(top_pelis_1$MovieID %in% top_pelis_3$MovieID)
+top_pelis_1$comp4 <- as.integer(top_pelis_1$MovieID %in% top_pelis_4$MovieID)
+top_pelis_1$comp5 <- as.integer(top_pelis_1$MovieID %in% top_pelis_5$MovieID)
+Dif_1_2= top_pelis_1 %>% 
+           filter(comp2 %in% c('0'))
+Dif_1_3= top_pelis_1 %>% 
+  filter(comp3 %in% c('0')) #░obtener las que no aparecen
+Dif_1_4= top_pelis_1 %>% 
+  filter(comp4 %in% c('0')) #░obtener las que no aparecen
+Dif_1_5= top_pelis_1 %>% 
+  filter(comp5 %in% c('0')) #░obtener las que no aparecen
+```
+
+Películas que el `top_2` no ha evaluado pero el `top_1` si lo ha hecho:
+```{r}
+films_2 = Dif_1_2$Title
+```
+
+Películas que el `top_3` no ha evaluado pero el `top_1` si lo ha hecho:
+
+```{r}
+films_3 = Dif_1_3$Title
+```
+
+Películas que el `top_4` no ha evaluado pero el `top_1` si lo ha hecho:
+
+```{r}
+films_4 = Dif_1_4$Title
+```
+
+
+Películas que el `top_5` no ha evaluado pero el `top_1` si lo ha hecho:
+ 
+```{r}
+films_5 = Dif_1_5$Title
+```
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+    2. Puntuaciones por película
+    3. Puntuaciones por usuario
+    4. Número de puntuaciones por película, usuario y año lanzamiento
+    5. Distribucion de los scores (boxplot,barplot)
+    6. Series temporales de puntuaciones
+    7. Distribución de cuantos usuarios evaluan cuantas pelis totales y diferentes
+    
+
+
+# Sistema de Recomendación / Similaridad (opcional)
+
+
+
+
+
+
