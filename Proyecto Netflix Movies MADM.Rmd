@@ -40,7 +40,7 @@ library(DescTools)
 library(RColorBrewer) #Paleta de colores
 library(plotly)       #Graficos interactivos
 library(dplyr) #relacionar dataframes
-library(webshot)
+library(webshot) #para mostrar los gráficos interactivos en el pdf
 #webshot::install_phantomjs()
 
 rm(list=ls())
@@ -195,7 +195,6 @@ scores = read_csv(here("Data","nuestras_pelis.csv"))
 
 # Cambiamos los tipos de variable necesarios
 scores %<>% mutate(across(c(MovieID,UserID,Score,Release_Year), as.integer))
-glimpse(scores) #para ver el tipo de dato
 ```
 
 
@@ -220,7 +219,6 @@ glimpse(scores)
 - _UserID_: _<int>_ Contiene un número entero, estos son objetos que contienen un único campo, un identificado ID para cada cliente, no queremos duplicados. 
 - _MovieID_: _<int>_ Contiene un número entero, estos son objetos que contienen un único campo, un identificado ID para cada película, no queremos duplicados. Un integer es inmutable. No obstante, cuando creemos gráficas los vamos a transformar a _chr_ para evitar que los ejes escalen los números.
 - _Release_Year_: _<int>_ No existen años con decimales, por lo tanto utilizar variables para datos enteros seria suficiente.
-Movie_title: chr. Utilizamos el tipo carácter porque nos interesan objetos que representan un conjunto de letras.
 - _Score_: _<int>_ Las puntuaciones son números enteros del 1 al 5. Las películas no aceptan decimales como puntuación.
 
 **Variables tipo _date_: Date**
@@ -232,29 +230,40 @@ Movie_title: chr. Utilizamos el tipo carácter porque nos interesan objetos que 
 ## Pregunta 2
 **Estudia la distribución del numero de películas estrenadas por año. Realiza un gráfico que muestre esta distribución haciendo los ajustes necesarios (agrupaciones, cambios de escala, transformaciones. . . )**
 
-Valoración media por 'Release_Year', de mayor a menor:
-
 ```{r}
-id_year <- group_by(scores, MovieID) %>% 
-  summarise(Release_Year = unique(Release_Year)) 
-movies_per_year <- id_year %>% group_by(Release_Year) %>% 
-  summarise(Count_Movies = n_distinct(MovieID))
+
+#id_year <- group_by(scores, MovieID) %>% 
+  #summarise(Release_Year = unique(Release_Year)) 
+#movies_per_year <- id_year %>% group_by(Release_Year) %>% 
+  #summarise(Count_Movies = n_distinct(MovieID))
+
+nuestros_movie_ids <- tibble(MovieID = unique(scores$MovieID))
+nuestras_titles <- titles %>%
+  right_join(nuestros_movie_ids, by = "MovieID")
+
+movies_per_year <- nuestras_titles %>%
+  group_by(Release_Year) %>%
+  summarise(n = n())
 
 summary(movies_per_year)
-movies_per_year[which(movies_per_year$Count_Movies==25),]
+max_n_table <- movies_per_year %>%
+  filter(n == max(n))
+max_n_year <- max_n_table$Release_Year
+max_n <- max_n_table$n
+  
 ```
-El año que se estrenaron más películas fue el 2000 y se estrenaron 25 y en un 50% de los años se estrenaron como mucho 2 pelis. Tener en cuenta que esto es sobre una muestra de un `r 100*250/17770`% del total de las películas de netflix. 
+El año que se estrenaron más películas fue el `r max_n_year` y se estrenaron `r max_n` y en un 50% de los años se estrenaron como mucho 2 pelis. Tener en cuenta que esto es sobre una muestra de un `r 100*250/17770`% del total de las películas de netflix. 
 
 ```{r, fig.align = 'center', fig.width = 5, fig.height = 3}
-ggplot(data=movies_per_year) + #sistema de coordenadas al que añadir puntos(creates an empty graph)
-  geom_point(mapping=aes(Release_Year, Count_Movies), color='blue', fill='red', shape=21) +
+ggplot(data = movies_per_year) + #sistema de coordenadas al que añadir puntos(creates an empty graph)
+  geom_point(mapping=aes(Release_Year, n), color='blue', fill='red', shape=21) +
   ggtitle('Distribución del número de películas por año de publicación')
 
-ggplot(data=id_year) + 
+ggplot(data = nuestras_titles) + 
   geom_bar(mapping=aes(x=Release_Year), stat='count', color='blue') +
   ggtitle('Distribución del número de películas por año de publicación')
 
-ggplot(data=id_year, aes(x=Release_Year)) +
+ggplot(data = nuestras_titles, aes(x=Release_Year)) +
   geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8)
 ```
 
@@ -271,8 +280,7 @@ kable(head(release_year_score_avg))
 ## Pregunta 3
 **Investiga la librería lubridate (o la que consideréis para manipulación de datos) y utilízala para transformar la columna de la fecha de la valoración en varias columnas por ejemplo year, month, week, day_of_week.**
 
-Valoración media por día de la semana, de mayor a menor:
-
+Usamos la librería *lubridate* para generar variables separadas para año, número de mes, número de semana del año, número de día del mes, número de día de la semana, y una variable binaria que specifica si el día es fin de semana o entre semana. 
 ```{r, warning=FALSE, message=FALSE}
 scores %<>% mutate(
   Year = year(Date), 
@@ -286,46 +294,38 @@ scores %<>% mutate(
   )
 ```
 
-
+A partir de las variables de número de mes y número de día de la semana, creamos sendos factores ordenados para el mes y el día de la semana.
 ```{r, warning=FALSE, message=FALSE}
-#Generamos una variable `Month`
 scores %<>% mutate(
   Month = ordered(n_month, levels = seq(1, 12, 1),labels = month.abb),
   Day_Week = ordered(n_day_week, levels = seq(1, 7, 1), labels = day.abb)
 )
 
+scores_dates <- scores %>%
+  select(MovieID, UserID, Score, Date, Year, Month, Day, Day_Week, Is_Weekend)
 
+kable(head(scores_dates, 3))
 ```
 
-Valoración media entre semana / fin de semana:
-  
-```{r, warning=FALSE, message=FALSE}
-weekend_weekday_scores <- scores %>%
-  group_by(Is_Weekend) %>%
-  summarise(Mean_Score = mean(Score), n = n())
 
-kable(weekend_weekday_scores)
 
-n_scores_weekend = weekend_weekday_scores  %>% filter(Is_Weekend == TRUE) %>% select(n)
-n_scores = sum(weekend_weekday_scores$n)
-n_scores_weekend_weekday_ratio = n_scores_weekend / n_scores #el 18% de las valoraciones son en fin de semana, que es menos que el 28% de días que son fin de semana
-```
 
 ## Pregunta 4
 **Genera un tabla que para cada película nos dé el número total de valoraciones, la suma de las valoraciones, la media las valoraciones, y otras estadísticos de interés (desviación típica, moda , mediana).**
-
-Valoración media por película, de mayor a menor:
 
 ```{r, warning=FALSE, message=FALSE}
 movie_scores <- scores %>%
   group_by(MovieID) %>%
   summarise(Sum_Score = sum(Score), Mean_Score = mean(Score), SD_Score = sd(Score), Mode_Score = mlv(Score), Median_Score = median(Score) , n = n()) %>%
-  left_join(titles, by = 'MovieID')
+  left_join(titles, by = 'MovieID') 
 
-kable(head(movie_scores %>% arrange(desc(Mean_Score))))
+movie_scores_table <- movie_scores %>%
+  ungroup() %>%
+  select(-MovieID, -Release_Year) %>%
+  relocate(Title, n, Sum_Score, Mean_Score, SD_Score, Mode_Score, Mean_Score)
 
-kable(head(movie_scores %>% arrange(desc(n))))
-  
+kable(head(movie_scores_table %>% arrange(desc(Mean_Score))))
+
 ```
 
 ## Pregunta 5
@@ -440,7 +440,17 @@ ggplot(data = day_week_scores, aes(x = Day_Week, y = n)) +
   scale_x_discrete(drop = FALSE, breaks = levels(scores$Day_Week))
 ```
 
+```{r, warning=FALSE, message=FALSE}
+weekend_weekday_scores <- scores %>%
+  group_by(Is_Weekend) %>%
+  summarise(Mean_Score = mean(Score), n = n())
 
+kable(weekend_weekday_scores)
+
+n_scores_weekend = weekend_weekday_scores  %>% filter(Is_Weekend == TRUE) %>% select(n)
+n_scores = sum(weekend_weekday_scores$n)
+n_scores_weekend_weekday_ratio = n_scores_weekend / n_scores #el 18% de las valoraciones son en fin de semana, que es menos que el 28% de días que son fin de semana
+```
 
 ## Pregunta 7
 **Genera una tabla agrupada por película y año del número de valoraciones. Representa la tabla gráficamente para las 10 películas con mayor número de valoraciones.**
