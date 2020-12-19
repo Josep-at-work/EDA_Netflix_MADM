@@ -59,20 +59,86 @@ gg3 <- ggplot(q3, aes(x = Month, y = Score, fill = Month)) +
   theme_bw()
 print(gg3)
 
+#número de veces que ha votado cada usuario
+num_votos_por_usuario = aggregate(scores$UserID, by = list(Usuario=scores$UserID), length)
+class(num_votos_por_usuario)
+sort(num_votos_por_usuario)
+
+#Los cinco usuarios que más películas han evaluado, qué peliculas son y qué notas les han dado:
+
+top_5_users= head(num_votos_por_usuario[order(num_votos_por_usuario$x, decreasing = TRUE),],5)
+top_5_users # 305344 , 387418, 2439493, 1664010, 2118461.
+
+#####################QUÉ PELÍCULAS HAN EVALUADO LOS 5 USUARIOS########################
+
+##idea: qué pelicula ha sido la menos evaluada
+
+library(dplyr)
+top_pelis = scores %>% 
+              filter(UserID %in% c('305344', '387418', '2439493', '1664010', '2118461'))
+#Títulos películas
+unique(top_pelis$Title)
+unique(scores$Title)
+#Vemos que entre el total de películas puntuadas por estos 5 usuarios, se han puntuado todas las películas.
+
+##Ahora, para ver las películas que ha evaluado cada usuario vamos a realizar lo siguiente:
+
+##top_pelis_1
+top_pelis_1 = scores %>% 
+  filter(UserID %in% c('305344'))
+
+##top_pelis_2
+top_pelis_2 = scores %>% 
+  filter(UserID %in% c('387418'))
+
+##top_pelis_3
+top_pelis_3 = scores %>% 
+  filter(UserID %in% c('2439493'))
+
+##top_pelis_4
+top_pelis_4 = scores %>% 
+  filter(UserID %in% c('1664010'))
+
+##top_pelis_5
+top_pelis_5 = scores %>% 
+  filter(UserID %in% c('2118461'))
 
 
+#Filas diferentes presentes en el top_pelis_1
+
+#anti_join(top_pelis_1, top_pelis_2) #no me sirve porque tengo demasiados registros....
+
+#El usuario que más películas ha puntuado es el 305344, entonces vamos a comparar el resto de usuarios con este:
+
+#usuario top1 y top2: qué películas top 2 no ha evaluado que si lo haya realizado top 1
+top_pelis_1$comp2 <- as.integer(top_pelis_1$MovieID %in% top_pelis_2$MovieID) #Usamos el operador %in% para ver si cada elemento de top_pelis_1 se encuentra en top_pelis_2. 
+
+#Registros que SI estan en 1 pero no en 2
+Dif_1_2= top_pelis_1 %>% 
+           filter(comp2 %in% c('0')) #░obtener las que no aparecen
+Dif_1_2 #Obtenemos las 3 películas que el usuario 2 no ha puntuado #PREGUNTA: un usuario puede puntuar una película dos veces?
+
+#Entonces, el usuario que ocupa una 2 posición en la lista de usuarios que más películas han evaluado, ha puntuado tres títulos menos que el usuario 1:
+Dif_1_2$Title
+
+# A continuación, seguimos realizando lo mismo con el resto de usuarios (comparandolos siempre con el usuario que ha puntuado más peliculas):
 
 
+top_pelis_1$comp3 <- as.integer(top_pelis_1$MovieID %in% top_pelis_3$MovieID)
+top_pelis_1$comp4 <- as.integer(top_pelis_1$MovieID %in% top_pelis_4$MovieID)
+top_pelis_1$comp5 <- as.integer(top_pelis_1$MovieID %in% top_pelis_5$MovieID)
+View(top_pelis_1)
 
+Dif_1_3= top_pelis_1 %>% 
+  filter(comp3 %in% c('0')) #░obtener las que no aparecen
+Dif_1_3 
 
+Dif_1_4= top_pelis_1 %>% 
+  filter(comp4 %in% c('0')) #░obtener las que no aparecen
+Dif_1_4 
 
-
-
-
-
-
-
-
-
+Dif_1_5= top_pelis_1 %>% 
+  filter(comp5 %in% c('0')) #░obtener las que no aparecen
+Dif_1_5 
 
 
