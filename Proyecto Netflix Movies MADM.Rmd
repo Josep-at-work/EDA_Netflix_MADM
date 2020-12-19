@@ -4,6 +4,7 @@ author: "Laura Moreno, Josep Roman, Paul Ramírez"
 date: "11/28/2020"
 output: 
   pdf_document:
+    latex_engine: xelatex
     toc: yes
     number_sections: yes
   html_document:
@@ -14,6 +15,7 @@ header-includes: \renewcommand{\contentsname}{Contenidos}
 citecolor: blue
 toccolor: blue
 urlcolor: blue
+always_allow_html: true
 ---
 \fontsize{8}{8}
 
@@ -38,6 +40,8 @@ library(DescTools)
 library(RColorBrewer) #Paleta de colores
 library(plotly)       #Graficos interactivos
 library(dplyr) #relacionar dataframes
+#library(webshot)
+#webshot::install_phantomjs()
 
 rm(list=ls())
 cat("\014")
