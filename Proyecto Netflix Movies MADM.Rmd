@@ -387,6 +387,7 @@ El histograma nos sirve para reforzar la afirmación anterior, vemos que la frec
 
 Como alternativa al *boxplot*, se puede utilizar el +violin plot*. En este caso vamos a representar la puntuación otorgada por los usuarios a cada película:
 ```{r, fig.align = 'center', fig.width = 5, fig.height = 3, echo = FALSE}
+top5$MovieID <- as.character(top5$MovieID)
 plot2 = ggplot(data = top5, aes(x = MovieID, y = Score)) + 
   #geom_jitter(size = 1, color = 'gray', alpha = 0.5) + 
   geom_violin(aes(fill = MovieID), color = 'black', alpha = 0.8) +
