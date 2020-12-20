@@ -469,7 +469,7 @@ n_scores_weekend_weekday_ratio = n_scores_weekend / n_scores #el 18% de las valo
 table7.1 <- group_by(scores, MovieID, Year=year(Date)) %>%
   summarise(Votes = n_distinct((UserID)), Mean = round(mean(Score),3))  #agrupamos por pelicula y año en que fue valorada
 
-top10 <- head(arrange(movie_scores[,c('MovieID','n')], desc(n)), 10)  #las 10 más votadas
+top10_votada <- head(arrange(movie_scores[,c('MovieID','n','Mean_Score','Title')], desc(n)), 10)  #las 10 más votadas
 
 movies_onfire <- filter(table7.1, MovieID %in% top10$MovieID) #onfire porque es un heatmap y son las pelis mas votadas
 
@@ -479,8 +479,9 @@ for (i in 1:10) {
   indexes <- which(movies_onfire$MovieID == movie)
   movies_onfire$Ranking <- replace(movies_onfire$Ranking, indexes, i)
   count=i
-}                                                             #Ordenamos las pelis según el top10
-kable(top10)
+}                                  #Ordenamos las pelis según el top10
+top10$Ranking=1:10
+kable(top10[,c('Ranking','Title', 'n')])
 ```
 Para visualizar la distribución de votaciones por año que obtubieron las 10 peliculas más votadas de *Netflix*, creamos un Heatmap
 ```{r, fig.align = 'center', fig.width = 8, fig.height = 6}
@@ -515,34 +516,18 @@ ggplotly(hm, tooltip = c('text', 'ID', 'Year'))
 ## Pregunta 8
 **Distribución del score promedio por año de las 10 películas con mayor número de valoraciones.**
 
-```{r, fig.align = 'center', fig.width = 5, fig.height = 3}
-ggplot(movies_onfire, aes(Year, Mean, group=MovieID, colour=factor(MovieID)))+
-  geom_point()
+```{r, fig.align = 'center', fig.width = 10, fig.height = 3}
+movies_onfire %<>% left_join(titles[,-2], by = 'MovieID')
+orden_titulos <- arrange(top10_votada[,c('Title', 'Mean_Score')], desc(Mean_Score)) 
+movies_onfire %<>% transform(Title=factor(Title, levels=as.vector(orden_titulos$Title)))
+
+ggplot(movies_onfire, aes(Year, Mean, group=MovieID, colour=factor(MovieID))) +
+  geom_point() +
+  geom_line() +
+  facet_wrap(~Title, nrow = 2, scale='fixed')+
+  theme(legend.position="none")
 ```
-
-```{r, include = FALSE}
-#Elegir el TOP 10 películas con mayor número de valoraciones:
-ej_10 = head(movie_scores[order(movie_scores$n, decreasing = TRUE),],10)
-ej_10
-```
-
-```{r, fig.align = 'center', fig.width = 5, fig.height = 3}
-ggplot() +
-  #geom_point(color = 'red', fill = 'red', size = 4, shape = 18, alpha = 0.5) +
-  geom_rug(data=ej_10, mapping=aes(x=Mean_Score), color="darkorange") +
-  geom_rug(data=ej_10, mapping=aes(y=Release_Year), color="darkmagenta") +
-  geom_point(data=ej_10, mapping=aes(x=Mean_Score, y=Release_Year), color = 'darkturquoise', fill = 'darkmagenta', size = 4, shape = 18, alpha = 0.5) +
-  ggtitle("Distribución del score promedio por año de las 10 películas
-          con mayor número de valoraciones") +
-  #theme(plot.title = element_text(size = 10, face = "bold", family = 'Century')) + 
-  xlab('Puntuación media') +
-  ylab('Año de estreno')
-
-#+
- # theme_bw() +
-  #theme(text=element_text(family="Broadway", face="bold", size=10))
-```
-
+Las peliculas están ordenadas por orden descendiente de su puntuación media. 
 
 ## Pregunta 9
 **Realiza algún gráfico o estudió de estadísticos adicional que consideres informativo en base al análisis exploratorio anterior.**
