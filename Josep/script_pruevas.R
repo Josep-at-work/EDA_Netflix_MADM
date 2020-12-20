@@ -184,4 +184,7 @@ head(movies_onfire)
 ggplot(movies_onfire, aes(as.character(MovieID), Mean))+
   geom_violin(scale='area')
 
+ggplot(movies_onfire, aes(Year, Mean, group=MovieID, colour=factor(MovieID)))+
+  geom_point()
+
 head(mpg)

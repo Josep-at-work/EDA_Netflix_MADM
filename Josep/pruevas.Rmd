@@ -515,7 +515,8 @@ ggplotly(hm, tooltip = c('text', 'ID', 'Year'))
 **Distribución del score promedio por año de las 10 películas con mayor número de valoraciones.**
 
 ```{r, fig.align = 'center', fig.width = 5, fig.height = 3}
-
+ggplot(movies_onfire, aes(Year, Mean, group=MovieID, colour=factor(MovieID)))+
+  geom_point()
 ```
 
 
