@@ -181,10 +181,22 @@ ggplotly(h, tooltip = c('text', 'MovieID', 'Year'))
 ###############################################################################################################
 
 head(movies_onfire)
+##################boplot
 ggplot(movies_onfire, aes(as.character(MovieID), Mean))+
-  geom_violin(scale='area')
+  geom_boxplot(scale='area')
 
-ggplot(movies_onfire, aes(Year, Mean, group=MovieID, colour=factor(MovieID)))+
-  geom_point()
+#################Multiplot
+movies_onfire %<>% left_join(titles[,-2], by = 'MovieID')
+movies_onfire %<>% transform(Title=factor(Title, levels=as.vector(top10$Title)))
+glimpse(movies_onfire)
 
-head(mpg)
+
+ggplot(movies_onfire, aes(Year, Mean, group=MovieID, colour=factor(MovieID))) +
+  geom_point() +
+  geom_line() +
+  facet_wrap(~Title, nrow = 2, scale='fixed')+
+  theme(legend.position="none")
+
+
+
+
