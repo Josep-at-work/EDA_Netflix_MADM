@@ -458,7 +458,11 @@ n_scores_weekend_weekday_ratio = n_scores_weekend / n_scores #el 18% de las valo
 
 ```{r}
 table7.1 <- group_by(scores, MovieID, Year=year(Date)) %>%
+<<<<<<< Updated upstream
   summarise(Votes = n_distinct((UserID)), Mean = round(mean(Score),3))     #agrupamos por pelicula y año en que fue valorada
+=======
+  summarise(votes = n_distinct((UserID)))                       #agrupamos por pelicula y año en que fue valorada
+>>>>>>> Stashed changes
 
 top10 <- head(arrange(movie_scores[,c('MovieID','n')], desc(n)), 10)  #las 10 más votadas
 
@@ -492,7 +496,11 @@ mycolors <- colorRampPalette(brewer.pal(9, "YlOrRd"))(nb.cols)
 # 3r creamos el Heatmap
 # movies_onfire <- arrange(movies_onfire, desc(Ranking))
 
+<<<<<<< Updated upstream
 ggplot(movies_onfire, aes(text = paste('Votes:', Votes), ID = MovieID, y = Ranking, x = Year )) +  #text para visualizar votos en el interactivo
+=======
+ggplot(movies_onfire, aes(text = paste('Votes:', votes), ID = MovieID, y = Ranking, x = Year )) +  #text para visualizar votos en el interactivo
+>>>>>>> Stashed changes
   geom_tile(aes(fill = secuencia)) +                  
   scale_y_continuous(breaks=10:1) +             
   scale_x_continuous(breaks=1999:2005) +
