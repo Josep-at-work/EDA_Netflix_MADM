@@ -370,13 +370,21 @@ par(bg="grey98", mar=c(3,3,3,3), mfcol=c(1,2))
 top5 = scores %>% 
   filter(MovieID %in% c('6037', '8387' , '10730' , '313', '9645'))
 
-pl <- ggplot(top5, aes(x = Score, y = Release_Year, fill = factor(MovieID)))
-pl + geom_boxplot() + theme_bw() + coord_flip() + labs(fill = "Year", title = 'Boxplot de la puntuación por película y año de estreno')+
-  scale_y_continuous(breaks = seq(1999, 2005, 1))
+top5$MovieID <- as.factor(top5$MovieID)
+top5$Release_Year <- as.factor(top5$Release_Year)
+top5$Score <- as.integer(top5$Score)
+
+p + stat_summary(fun=mean, geom="point", shape=23, size=4) + theme(legend.position="bottom")           
+p<-ggplot(top5, aes(x=MovieID, y=Score, color=Release_Year)) +
+  xlab('Identificador Película') + 
+  ylab('Puntuación') +
+  ggtitle('Puntuación de los usuarios según 
+la película y el año de estreno') + 
+  geom_boxplot() + scale_color_manual(values=c("#003057", "#B52555", "#A0D1CA", "#7A99AC"))
 
 ggplot(top5, aes(x=top5$Score))+
   geom_histogram(aes(y=..density..), position="identity", alpha=0.5) + 
-  geom_histogram(bins=5, color="black", fill="deepskyblue4",
+  geom_histogram(binwidth = 1, color="black", fill="deepskyblue4",
                  linetype="dashed") +
   labs(title="Histograma puntuaciones top 5 películas",x="Scores", y = "Densidad")+
   theme_bw()
