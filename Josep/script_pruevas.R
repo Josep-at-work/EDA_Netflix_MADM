@@ -172,4 +172,16 @@ ggplot(movies_onfire, aes(text = paste('Votes:', votes), y = MovieID, x = Year )
 
 library(plotly) ###### interactivos 
 ggplotly(h, tooltip = c('text', 'MovieID', 'Year'))
-  
+
+
+
+###############################################################################################################
+# 8. Distribución del score promedio por año de las 10 películas con mayor número de valoraciones.
+# 
+###############################################################################################################
+
+head(movies_onfire)
+ggplot(movies_onfire, aes(as.character(MovieID), Mean))+
+  geom_violin(scale='area')
+
+head(mpg)
