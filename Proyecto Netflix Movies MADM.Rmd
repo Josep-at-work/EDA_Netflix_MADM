@@ -307,9 +307,6 @@ scores_dates <- scores %>%
 kable(head(scores_dates, 3))
 ```
 
-
-
-
 ## Pregunta 4
 **Genera un tabla que para cada película nos dé el número total de valoraciones, la suma de las valoraciones, la media las valoraciones, y otras estadísticos de interés (desviación típica, moda , mediana).**
 
@@ -374,13 +371,13 @@ top5$MovieID <- as.factor(top5$MovieID)
 top5$Release_Year <- as.factor(top5$Release_Year)
 top5$Score <- as.integer(top5$Score)
 
-p + stat_summary(fun=mean, geom="point", shape=23, size=4) + theme(legend.position="bottom")           
 p<-ggplot(top5, aes(x=MovieID, y=Score, color=Release_Year)) +
   xlab('Identificador Película') + 
   ylab('Puntuación') +
   ggtitle('Puntuación de los usuarios según 
 la película y el año de estreno') + 
   geom_boxplot() + scale_color_manual(values=c("#003057", "#B52555", "#A0D1CA", "#7A99AC"))
+p + stat_summary(fun=mean, geom="point", shape=23, size=4) + theme(legend.position="bottom") 
 
 ggplot(top5, aes(x=top5$Score))+
   geom_histogram(aes(y=..density..), position="identity", alpha=0.5) + 
@@ -414,6 +411,10 @@ Por último, estudiamos si existe relación entre la puntuación media y el año
 
 Luego, vamos a observar si existe correlación entre estas variables. Debido al tamaño de la muestra, no se puede establecer si existe o no relación.
 ```{r, fig.align = 'center', fig.width = 5, fig.height = 3, echo = FALSE}
+top5$MovieID <- as.integer(top5$MovieID)
+top5$Release_Year <- as.integer(top5$Release_Year)
+top5$Score <- as.integer(top5$Score)
+
 corr <- round(cor(top5[,-c(3,6:14)]), 1) #excluir los títulos
 #como la matriz de correlación es simétrica, basta con graficar simplemente una parte de ella
 ggcorrplot(corr, method = 'circle', type = 'lower', lab = TRUE) +
@@ -640,7 +641,7 @@ knitr::kable(top_5_users, digits = 5, align = "c", caption = "Top 5 Usuarios")
 ```
 
 En tercer lugar, buscaremos qué películas han sido evaluadas por estos usuarios. Seguidamente, compararemos el total de películas evaluadas por el usuario `top_1` con el resto:
-```{r}
+```{r, include= FALSE}
 ##top_pelis_1
 top_pelis_1 = scores %>% 
   filter(UserID %in% c('305344'))
