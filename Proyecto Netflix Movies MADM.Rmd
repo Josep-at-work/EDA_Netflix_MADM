@@ -42,7 +42,7 @@ library(plotly)       #Graficos interactivos
 library(dplyr) #relacionar dataframes
 library(webshot) #para mostrar los gráficos interactivos en el pdf
 #webshot::install_phantomjs()
-
+library(kableExtra)
 rm(list=ls())
 cat("\014")
 ```
@@ -281,7 +281,10 @@ movie_scores_table <- movie_scores %>%
   select(-MovieID, -Release_Year) %>%
   relocate(Title, n, Sum_Score, Mean_Score, SD_Score, Mode_Score, Mean_Score)
 
-kable(head(movie_scores_table %>% arrange(desc(Mean_Score))))
+kable(head(movie_scores_table %>% arrange(desc(Mean_Score))), digits = 3, align = "c", caption = "Top 5 Usuarios") %>%
+kable_styling(latex_options = c("striped"),
+font_size = 8) %>%
+column_spec(1,width = "4cm")
 
 ```
 
@@ -291,7 +294,16 @@ sample = head(movie_scores[order(movie_scores$n, decreasing = TRUE),],5)
 #sample
 ```
 
-A continuación, representamos el top 5 películas en un `treemap`:
+A continuación, representamos el top 5 películas en un `treemap`, este incluye las siguientes variables:
+
+1) El título de las cinco películas que recogen más valoraciones.
+
+2) El tamaño de cada recuadro es proporcional al total de las valoraciones obtenidas. 
+
+  2.1) Las valoraciones obtenidas se reflejan, además, en la esquina inferior derecha.
+
+3) Finalmente, la esquina inferior izquierda es la puntuación media de cada película.
+
 ```{r, fig.align = 'center', fig.width = 5, fig.height = 3, echo = FALSE}
 
 (ptm<-ggplot(sample,aes(area=n,fill=Title,
@@ -323,9 +335,7 @@ A continuación, representamos el top 5 películas en un `treemap`:
 Primero, vamos a comparar los estadísticos de estas cinco películas mediante un *boxplot* y un *histograma*:
 ```{r fig.align='center', fig.height=3, fig.width=5, include=FALSE}
 par(bg="grey98", mar=c(3,3,3,3), mfcol=c(1,2))
-top5 = scores %>% 
-  filter(MovieID %in% c('6037', '8387' , '10730' , '313', '9645'))
-
+top5 <- filter(scores, MovieID %in% sample$MovieID)
 top5$MovieID <- as.factor(top5$MovieID)
 top5$Release_Year <- as.factor(top5$Release_Year)
 top5$Score <- as.integer(top5$Score)
@@ -353,22 +363,25 @@ El histograma nos sirve para reforzar la afirmación anterior, vemos que la frec
 
 Como alternativa al *boxplot*, se puede utilizar el +violin plot*. En este caso vamos a representar la puntuación otorgada por los usuarios a cada película:
 ```
-
+Utilizaremos el *diagrama de violin* para visualizar la distribución de los datos y su densidad de probabilidad. En este caso vamos a representar la puntuación otorgada por los usuarios a cada película. A continuación, veremos que este gráfico es una combinación de un diagrama de cajas y bigotes y un diagrama de densidad. El punto rojo es la media de cada película, mientras que la línea negra que atraviesa el diagrama de cajas es la moda.
 
 ```{r, fig.align = 'center', fig.width = 5, fig.height = 3, echo = FALSE}
 top5$MovieID <- as.character(top5$MovieID)
 plot2 = ggplot(data = top5, aes(x = MovieID, y = Score)) + 
   #geom_jitter(size = 1, color = 'gray', alpha = 0.5) + 
-  geom_violin(aes(fill = MovieID), color = 'black', alpha = 0.8) +
+  geom_violin(aes(fill = Title), color = 'black', alpha = 0.8) +
   geom_boxplot(color = 'black', alpha = 0.7) + 
   xlab('Identificador Película') + 
   ylab('Puntuación') +
-  ggtitle('Puntuación de los usuarios según la película') + 
+  ggtitle('Puntuación de los usuarios según la película') +
+  geom_point(stat =  "summary", fun= mean, shape = 16, size = 2, color = "red") +
   theme_bw()
 ```
 ```{r}
 plot2
 ```
+
+
 
 ## Análisis del número de valoraciones por més y día de la semana
 ```{r message=FALSE, warning=FALSE, include=FALSE}
@@ -489,7 +502,10 @@ for (i in 1:10) {
   count=i
 }                                  #Ordenamos las pelis según el top10
 top10_votada$Ranking=1:10
-kable(top10_votada[,c('Ranking','Title', 'n')])
+kable(top10_votada[,c('Ranking','Title', 'n')], align = "c", caption = "Top 5 Usuarios") %>%
+kable_styling(latex_options = c("striped"),
+font_size = 8) %>%
+column_spec(1,width = "4cm")
 ```
 Para visualizar la distribución de votaciones por año que obtubieron las 10 peliculas más votadas de *Netflix*, creamos un Heatmap
 
@@ -542,26 +558,31 @@ Las peliculas están ordenadas por orden descendiente de su puntuación media.
 
 Primero vamos a buscar el número de total de películas que han sido evaluadas por usuario: 
 
-```{r}
+```{r, fig.align = 'center', fig.width = 10, fig.height = 3}
 #número de veces que ha votado cada usuario
 num_votos_por_usuario = aggregate(scores$UserID, by = list(Usuario=scores$UserID), length)
 ```
 
 En segundo lugar, seleccionaremos el *top 5 usuarios* que más películas han puntuado,
-```{r}
+```{r, fig.align = 'center', fig.width = 10, fig.height = 3}
+
 df <- scores %>% group_by(UserID) %>% count()
 df <- scores %>% group_by(UserID) %>% summarise(NN = n())
 df <- scores %>% group_by(UserID) %>% 
-  summarise(NN = n(), percent = n()/nrow(.) ) #Añadir a la tabla el % que representa cada país en el Total
+  summarise(NN = n(), percent = n()/nrow(.) ) #Añadir a la tabla el % que representa cada usuario en el Total
 df <- scores %>% group_by(UserID) %>%
   summarise (NN = n()) %>%
   mutate(percent= NN / sum(NN))
 top_5_users <- head(df[order(df$NN, decreasing = TRUE),],5)
-knitr::kable(top_5_users, digits = 5, align = "c", caption = "Top 5 Usuarios")
+knitr::kable(top_5_users, digits = 5, align = "c", caption = "Top 5 Usuarios") %>%
+kable_styling(latex_options = c("striped"),
+font_size = 8) %>%
+column_spec(1,width = "4cm")
+
 ```
 
 En tercer lugar, buscaremos qué películas han sido evaluadas por estos usuarios. Seguidamente, compararemos el total de películas evaluadas por el usuario `top_1` con el resto:
-```{r, include= FALSE}
+```{r, include= FALSE, fig.align = 'center', fig.width = 10, fig.height = 3}
 ##top_pelis_1
 top_pelis_1 = scores %>% 
   filter(UserID %in% c('305344'))
@@ -585,7 +606,7 @@ top_pelis_5 = scores %>%
 
 El usuario que más películas ha puntuado es el _305344_, entonces vamos a comparar el resto de usuarios con este:
 
-```{r}
+```{r, fig.align = 'center', fig.width = 10, fig.height = 3}
 top_pelis_1$comp2 <- as.integer(top_pelis_1$MovieID %in% top_pelis_2$MovieID)
 top_pelis_1$comp3 <- as.integer(top_pelis_1$MovieID %in% top_pelis_3$MovieID)
 top_pelis_1$comp4 <- as.integer(top_pelis_1$MovieID %in% top_pelis_4$MovieID)
@@ -625,7 +646,6 @@ films_5 = Dif_1_5$Title
 ```
 
 ```{r eval=FALSE, include=FALSE}
-
 Por último, estudiamos si existe relación entre la puntuación media y el año de estreno. Como podemos observar, no existe relación entre
 
 Luego, vamos a observar si existe correlación entre estas variables. Debido al tamaño de la muestra, no se puede establecer si existe o no relación.
@@ -643,10 +663,44 @@ ggcorrplot(corr, method = 'circle', type = 'lower', lab = TRUE) +
   theme(legend.position="none")
 ```
 
+Para terminar, realizamos un correolograma con el dataset. Hemos creado un correolograma de la tabla `scores_dates`, solamente con los valores numéricos. Luego, se ha incluido también un correolograma con los p-valores de las dimensiones anteriores, para saber si estas son o no son significantes.
+
+Las variables que presentan correlación son las sombreadas en color. Después, la tabla de al lado señala aquellas variables que no son significantes en nuestro análisis.
+ 
+```{r, echo=FALSE, fig.align = 'center', fig.width = 10, fig.height = 3}
+#calcular matriz de corr
+corr <- round(cor(scores_dates[-c(3,6,12:14)]),1) #scores_dates[-c(3,6,12:14)] quitar valores NO numéricos
+# Compute a matrix of correlation p-values
+p.mat <- cor_pmat(scores_dates[-c(3,6,12:14)])
 ```
+
+```{r, fig.align = 'center', fig.width = 10, fig.height = 6, echo=FALSE}
+require(gridExtra)
+plot1 <- ggcorrplot(corr, method = 'circle', type = 'lower', lab = FALSE, hc.order = TRUE, ggtheme = ggplot2::theme_gray,
+colors = c("ivory2", "white", "indianred4")) +
+  ggtitle("Correolograma 
+del conjunto scores") +
+  theme_bw()
+
+plot1 <- plot1 +      theme(legend.position="top",
+           plot.margin=unit(c(0.5,1,0,1), "cm"),
+           panel.margin=unit(c(0.5,1,0,1), "cm")) + theme(axis.text.x = element_text(angle = 50, hjust = 1))
+
+plot3 <-ggcorrplot(corr, hc.order = TRUE, method = 'circle', type = "lower",
+  p.mat = p.mat, ggtheme = ggplot2::theme_dark,
+colors = c("ivory2", "white", "indianred4")) +
+  ggtitle("Correlación
+p-valores") +
+  theme_bw()
+
+plot3 <- plot3 +      theme(legend.position="top",
+           plot.margin=unit(c(0.5,1,0,1), "cm"),
+           panel.margin=unit(c(0.5,1,0,1), "cm"))  + theme(axis.text.x = element_text(angle = 50, hjust = 1))
+grid.arrange(plot1, plot3, ncol=2)
+```
+
  
- 
- 
+  
 ```{r eval=FALSE, include=FALSE}
 Otras ideas:
   
@@ -662,9 +716,6 @@ Otras ideas:
 # Sistema de Recomendación / Similaridad (opcional)
   
 ```
- 
- 
- 
  
  
  
