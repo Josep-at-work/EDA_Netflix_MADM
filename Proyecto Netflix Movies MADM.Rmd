@@ -533,10 +533,8 @@ ggplot(movies_onfire, aes(text = paste('Votes:', Votes), ID = MovieID, y = Ranki
   scale_x_continuous(breaks=1999:2005) +
   scale_fill_manual(values = mycolors) +              #secuencia de colores
   labs(fill = 'Votes') -> hm                           #Legend name
-
-ggplotly(hm, tooltip = c('text', 'ID', 'Year'))
 ```
-También puedes visualizar la [versión interactiva](https://github.com/paul-rami/proyecto-netflix-movies-madm/tree/main/Heatmap%20Interactivo) de este gráfico.
+También puedes visualizar la [versión interactiva](https://rawcdn.githack.com/paul-rami/proyecto-netflix-movies-madm/main/Heatmap%20Interactivo/Heatmap_Interactivo.html?token=ANOBI62VVCSVXQCX5IWW4HS74DG2A) de este gráfico.
 
 ## Evolución del score promedio de las 10 películas con más valoraciones
 ```{r, fig.align = 'center', fig.width = 10, fig.height = 3}
