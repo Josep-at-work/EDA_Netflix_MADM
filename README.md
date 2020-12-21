@@ -10,3 +10,4 @@
 - Para la parte de tidyverse es important hacer énfasis en la **carga de datos, transformación de variables (parse), representación de gráficos con ggplot** y demás cosas de tidyverse que habéis aprendido
 - Further projects: Detallar posibles problemas que se podrían plantear (qué se podría saber o inferir con esos datos), pros y contras de los datos que tenéis (qué más os faltaría para poder hacer un análisis completo) aunque **NO QUIERO QUE APLIQUÉIS NINGUN MODELO!!!!**
 
+[Heatmap Interactivo](https://rawcdn.githack.com/paul-rami/proyecto-netflix-movies-madm/main/Heatmap%20Interactivo/Heatmap_Interactivo.html?token=ANOBI62VVCSVXQCX5IWW4HS74DG2A)
