@@ -235,8 +235,7 @@ El año que se estrenaron más películas fue el `r max_n_year` y se estrenaron 
 ggplot(data = nuestros_titles,aes(x=Release_Year, y=..density..)) + 
   geom_histogram(colour="black", fill="lightblue") +
   geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.6) +
-  ylab('Densidad') + xlab('Año de estreno') +
-  ggtitle('Distribución de películas por año de publicación')
+  labs(x='Año de estreno', y='Densidad', title='Distribución de los estrenos')
 
 ```
 ## Transformación variable fecha valoración
