@@ -1,0 +1,104 @@
+---
+title: "Heatmap Interactivo"
+author: "Laura Moreno, Josep Roman, Paul Ramírez"
+date: "11/28/2020"
+output: 
+  html_document:
+    toc: yes
+    number_sections: yes
+  pdf_document:
+    latex_engine: xelatex
+    toc: yes
+    number_sections: yes
+linkcolor: red
+header-includes: \renewcommand{\contentsname}{Contenidos}
+citecolor: blue
+toccolor: blue
+urlcolor: blue
+always_allow_html: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+library(tidyverse)
+library(knitr)
+library(here)        #Permite ejecutar este rmd desde cualquier carpeta
+library(timeDate)
+library(modeest)
+library(lubridate)
+library(magrittr)    #Permite hacer pipes en ambos sentidos
+library(extrafont)   #Cambiar fuente graficos
+library(treemapify)
+library(ggplot2)
+library(ggcorrplot)
+library(DescTools)
+library(RColorBrewer) #Paleta de colores
+library(plotly)       #Graficos interactivos
+library(dplyr) #relacionar dataframes
+library(webshot) #para mostrar los gráficos interactivos en el pdf
+#webshot::install_phantomjs()ary(webshot) #para mostrar los gráficos interactivos en el pdf
+```
+
+```{r, include=FALSE}
+scores = read_csv(here("Data","nuestras_pelis.csv"))
+scores %<>% mutate(across(c(MovieID,UserID,Score,Release_Year), as.integer))
+
+titles = read_table(here("Data",'movie_titles_raw.csv'), col_names=F) %>%
+  separate(col = 1, into = c("MovieID", "Release_Year", "Title"), sep = ",", extra = "merge")
+titles  %<>% mutate(across(c(MovieID:Release_Year), as.integer))
+
+movie_scores <- scores %>%
+  group_by(MovieID) %>%
+  summarise(Sum_Score = sum(Score), Mean_Score = mean(Score), SD_Score = sd(Score), Mode_Score = mlv(Score), Median_Score = median(Score) , n = n()) %>%
+  left_join(titles, by = 'MovieID') 
+
+table7.1 <- group_by(scores, MovieID, Year=year(Date)) %>%
+  summarise(Votos = n_distinct((UserID)), Mean = round(mean(Score),3))  #agrupamos por pelicula y año en que fue valorada
+
+top10_votada <- head(arrange(movie_scores[,c('MovieID','n','Mean_Score','Title')], desc(n)), 10)  #las 10 más votadas
+
+movies_onfire <- filter(table7.1, MovieID %in% top10_votada$MovieID) #onfire porque es un heatmap y son las pelis mas votadas
+
+movies_onfire$Ranking <- movies_onfire$MovieID    
+for (i in 1:10) {
+  movie <- top10_votada$MovieID[i]
+  indexes <- which(movies_onfire$MovieID == movie)
+  movies_onfire$Ranking <- replace(movies_onfire$Ranking, indexes, i)
+  count=i
+}                                  #Ordenamos las pelis según el top10
+```
+
+```{r, include=FALSE}
+# 1r creamos una secuencia significativa de intervalos
+# barplot(height = movies_onfire$votes, ylim =c(1,80000)) #Cambiando los limites de y que intervalos son significativos
+
+secuencia <- cut(movies_onfire$Votos,
+                 breaks = c(min(movies_onfire$votes), 1000, 2000, 3000, 5000, 7000, 10000, 15000,
+                            20000, 25000, 30000,35000,40000,45000,50000,max(movies_onfire$votes)),
+                 labels=c('0<','1k-2k', '2k-3k', '3k-5k', '5k-7k', '7k-10k', '10k-15k', '15k-20k',
+                          '20k-25k', '25k-30k', '30k-35k', '35k-40k', '40k-45k', '45k-50k','>85k'),
+                 include.lowest = T) #15 values
+# 2n creamos una paleta de 15 colores
+# library(RColorBrewer)
+nb.cols <- 15
+mycolors <- colorRampPalette(brewer.pal(9, "YlOrRd"))(nb.cols)
+
+# 3r creamos el Heatmap
+# movies_onfire <- arrange(movies_onfire, desc(Ranking))
+
+ggplot(movies_onfire, aes(text = paste('Votos:', Votos), ID = MovieID, y = Ranking, x = Year )) +  #text para visualizar votos en el interactivo
+  geom_tile(aes(fill = secuencia)) +                  
+  scale_y_continuous(breaks=10:1) +             
+  scale_x_continuous(breaks=1999:2005) +
+  scale_fill_manual(values = mycolors) +              #secuencia de colores
+  labs(fill = 'Votos', title='Votaciones recibidas por las peliculas más votadas', x='Año', legend='Votos') -> hm
+```
+
+```{r,fig.align = 'center', fig.width = 8, fig.height = 6}
+ggplotly(hm, tooltip = c('text', 'ID', 'Year'))
+```
+

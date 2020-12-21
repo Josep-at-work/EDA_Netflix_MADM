@@ -214,11 +214,11 @@ glimpse(scores)
 
 ## Distribución películas estrenadas por año
 ```{r}
-nuestras_movie_ids <- tibble(MovieID = unique(scores$MovieID))
+nuestros_movie_ids <- tibble(MovieID = unique(scores$MovieID))
 nuestros_titles <- titles %>%
   right_join(nuestros_movie_ids, by = "MovieID")
 
-movies_per_year <- nuestras_titles %>%
+movies_per_year <- nuestros_titles %>%
   group_by(Release_Year) %>%
   summarise(n = n())
 
@@ -477,20 +477,22 @@ par(mfrow = c(1,1))
 table7.1 <- group_by(scores, MovieID, Year=year(Date)) %>%
   summarise(Votes = n_distinct((UserID)), Mean = round(mean(Score),3))  #agrupamos por pelicula y año en que fue valorada
 
-top10 <- head(arrange(movie_scores[,c('MovieID','n')], desc(n)), 10)  #las 10 más votadas
+top10_votada <- head(arrange(movie_scores[,c('MovieID','n','Mean_Score','Title')], desc(n)), 10)  #las 10 más votadas
 
-movies_onfire <- filter(table7.1, MovieID %in% top10$MovieID) #onfire porque es un heatmap y son las pelis mas votadas
+movies_onfire <- filter(table7.1, MovieID %in% top10_votada$MovieID) #onfire porque es un heatmap y son las pelis mas votadas
 
 movies_onfire$Ranking <- movies_onfire$MovieID    
 for (i in 1:10) {
-  movie <- top10$MovieID[i]
+  movie <- top10_votada$MovieID[i]
   indexes <- which(movies_onfire$MovieID == movie)
   movies_onfire$Ranking <- replace(movies_onfire$Ranking, indexes, i)
   count=i
-}                                                             #Ordenamos las pelis según el top10
-kable(top10)
+}                                  #Ordenamos las pelis según el top10
+top10_votada$Ranking=1:10
+kable(top10_votada[,c('Ranking','Title', 'n')])
 ```
 Para visualizar la distribución de votaciones por año que obtubieron las 10 peliculas más votadas de *Netflix*, creamos un Heatmap
+
 ```{r, fig.align = 'center', fig.width = 8, fig.height = 6}
 # 1r creamos una secuencia significativa de intervalos
 # barplot(height = movies_onfire$votes, ylim =c(1,80000)) #Cambiando los limites de y que intervalos son significativos
@@ -517,20 +519,22 @@ ggplot(movies_onfire, aes(text = paste('Votes:', Votes), ID = MovieID, y = Ranki
   labs(fill = 'Votes') -> hm                           #Legend name
 
 ggplotly(hm, tooltip = c('text', 'ID', 'Year'))
-
 ```
+[interactivo](https://uibes-my.sharepoint.com/:w:/r/personal/prm998_id_uib_cat/_layouts/15/Doc.aspx?sourcedoc=%7B42074b6a-ce31-4ffb-9123-21b025415d17%7D&action=edit&wdLOR=cE937A3FD-5876-4BDA-81B3-833BB750E295&wdPid=aef9558)
 
 ## Evolución del score promedio de las 10 películas con más valoraciones
-```{r, fig.align = 'center', fig.width = 5, fig.height = 3}
-ggplot(movies_onfire, aes(Year, Mean, group=MovieID, colour=factor(MovieID)))+
-  geom_point()
-```
+```{r, fig.align = 'center', fig.width = 10, fig.height = 3}
+movies_onfire %<>% left_join(titles[,-2], by = 'MovieID')
+orden_titulos <- arrange(top10_votada[,c('Title', 'Mean_Score')], desc(Mean_Score)) 
+movies_onfire %<>% transform(Title=factor(Title, levels=as.vector(orden_titulos$Title)))
 
-```{r, include = FALSE}
-#Elegir el TOP 10 películas con mayor número de valoraciones:
-ej_10 = head(movie_scores[order(movie_scores$n, decreasing = TRUE),],10)
-ej_10
+ggplot(movies_onfire, aes(Year, Mean, group=MovieID, colour=factor(MovieID))) +
+  geom_point() +
+  geom_line() +
+  facet_wrap(~Title, nrow = 2, scale='fixed')+
+  theme(legend.position="none")
 ```
+Las peliculas están ordenadas por orden descendiente de su puntuación media. 
 
 ## Estudios adicionales
 
