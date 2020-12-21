@@ -72,7 +72,9 @@ library(ggplot2)
 ##Oye, las 5 películas con mayor numero de puntuación son las siguientes:
 top5 = scores %>% 
   filter(MovieID %in% c('6037', '8387' , '10730' , '313', '9645'))
+top5 <- filter(sample, MovieID %in% sample$MovieID)
 
+top5
 #Boxplot del score de las 5 películas
 View(top5)
 boxplot(top5$Score, horizontal = TRUE, col = 123, border = 1)
@@ -117,16 +119,16 @@ he_plot =ggplot(data = top5, aes(x = MovieID, y = Score)) +
   theme_minimal()
 he_plot
 
-
+top5$MovieID <- as.character(top5$MovieID)
 plot2 = ggplot(data = top5, aes(x = MovieID, y = Score)) + 
   #geom_jitter(size = 1, color = 'gray', alpha = 0.5) + 
-  geom_violin(aes(fill = MovieID), color = 'black', alpha = 0.8) +
+  geom_violin(aes(fill = Title), color = 'black', alpha = 0.8) +
   geom_boxplot(color = 'black', alpha = 0.7) + 
-  xlab('Género') + 
-  ylab('Identificador Película') +
-  ggtitle('Puntuación de los usuarios según la película') + 
+  xlab('Identificador Película') + 
+  ylab('Puntuación') +
+  ggtitle('Puntuación de los usuarios según la película') +
+  geom_point(stat =  "summary", fun= mean, shape = 16, size = 2, color = "red") +
   theme_bw()
-plot2
 
 #######################################################EJERCICIO 9########################################
 #########################################################################################################
@@ -142,7 +144,7 @@ plot2
 
 ##Primero me creo una tabla seleccionando los campos que quiero comparar
 cols <- c(4,13)
-
+month_scores
 newtab=scores[,cols]
 newtab
 #scores
@@ -272,27 +274,46 @@ kable(head(test %>% arrange(desc(n))))
 
 # >, >=, <, <=, ==, !=
 
+#################TESTING poner 5 hist en 1 (solo funciona en script)
+dev.off() # Desactivamos todas las ventanas gráficas o dispositivos
+x11() # Abrimos el primer dispositivo
 
+matrix(c(1:5), nrow=5, byrow=FALSE)
+layout(matrix(c(1:5), nrow=5, byrow=FALSE))
+layout.show(5) # Muestra las cuatro particiones
 
+#filter(MovieID %in% c('6037', '8387' , '10730' , '313', '9645'))
+ID_1 = filter(top5, MovieID == '6037')
+ID_2 = filter(top5, MovieID == '8387')
+ID_3 = filter(top5, MovieID == '10730')
+ID_4 = filter(top5, MovieID == '313')
+ID_5 = filter(top5, MovieID == '9645')
 
-remove(q1)
-remove(q2)
-remove(q3)
+hist(ID_1$Score,  col="darkslategray2", breaks = "Scott")
+hist(ID_2$Score)
+hist(ID_3$Score)
+hist(ID_4$Score)
+hist(ID_5$Score)
 
+####################CORREOLOGRAMA
+#scores_dates
+library(ggcorrplot)
+#calcular matriz de corr
+corr <- round(cor(scores_dates[-c(3,6,12:14)]),2) #scores_dates[-c(3,6,12:14)] quitar valores NO numéricos
+corr
 
+ggcorrplot(corr, method = 'square', type = 'lower', lab = TRUE) +
+  ggtitle("Correolograma del conjunto scores") +
+  theme_bw()
 
+# Compute a matrix of correlation p-values
+p.mat <- cor_pmat(scores_dates[-c(3,6,12:14)])
+head(p.mat[, 1:4])
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Argument p.mat
+# Barring the no significant coefficient
+ggcorrplot(corr, hc.order = TRUE,
+           type = "lower", p.mat = p.mat) +
+  ggtitle("Correlación p-valores") +
+  theme_bw()
 
