@@ -214,8 +214,8 @@ glimpse(scores)
 
 ## Distribución películas estrenadas por año
 ```{r}
-nuestros_movie_ids <- tibble(MovieID = unique(scores$MovieID))
-nuestras_titles <- titles %>%
+nuestras_movie_ids <- tibble(MovieID = unique(scores$MovieID))
+nuestros_titles <- titles %>%
   right_join(nuestros_movie_ids, by = "MovieID")
 
 movies_per_year <- nuestras_titles %>%
@@ -228,20 +228,17 @@ max_n_table <- movies_per_year %>%
 max_n_year <- max_n_table$Release_Year
 max_n <- max_n_table$n
 ```
-El año que se estrenaron más películas fue el `r max_n_year` y se estrenaron `r max_n` y en un 50% de los años se estrenaron como mucho 2 pelis. Tener en cuenta que esto es sobre una muestra de un `r 100*250/17770`% del total de las películas de netflix. 
+El año que se estrenaron más películas fue el `r max_n_year` y se estrenaron `r max_n` y en un 50% de los años se estrenaron como mucho `r quantile(movies_per_year$n, 0.5)` pelis. Tener en cuenta que esto es sobre una muestra de un `r round(100*250/17770,2)`% del total de las películas de netflix. 
 
 ```{r, fig.align = 'center', fig.width = 5, fig.height = 3}
-ggplot(data = nuestras_titles) + 
-  geom_bar(mapping=aes(x=Release_Year), stat='count', color='blue') +
-  ggtitle('Distribución del número de películas por año de publicación')
+
+ggplot(data = nuestros_titles,aes(x=Release_Year, y=..density..)) + 
+  geom_histogram(colour="black", fill="lightblue") +
+  geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.6) +
+  ylab('Densidad') + xlab('Año de estreno') +
+  ggtitle('Distribución de películas por año de publicación')
 
 ```
-
-```{r eval=FALSE, include=FALSE}
-ggplot(data = nuestras_titles, aes(x=Release_Year)) +
-  geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8)
-```
-
 ## Transformación variable fecha valoración
 
 Usamos la librería *lubridate* para generar variables separadas para año, número de mes, número de semana del año, número de día del mes, número de día de la semana, y una variable binaria que specifica si el día es fin de semana o entre semana. 
