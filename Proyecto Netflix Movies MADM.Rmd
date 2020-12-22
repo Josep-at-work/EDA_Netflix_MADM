@@ -381,8 +381,8 @@ plot2 = ggplot(data = top5, aes(x = MovieID, y = Score)) +
   ggtitle('Puntuación de los usuarios según la película') +
   geom_point(stat =  "summary", fun= mean, shape = 16, size = 2, color = "red") +
   theme_bw()
-```
-```{r}
+
+
 plot2
 ```
 
@@ -589,7 +589,7 @@ ggplot(movies_onfire, aes(text = paste('Votes:', Votes), ID = MovieID, y = Ranki
   scale_y_continuous(breaks=10:1) +             
   scale_x_continuous(breaks=1999:2005) +
   scale_fill_manual(values = mycolors) +              #secuencia de colores
-  labs(fill = 'Votes') -> hm                           #Legend name
+  labs(fill = 'Votes')                            #Legend name
 ```
 También puedes visualizar la [versión interactiva](https://rawcdn.githack.com/paul-rami/proyecto-netflix-movies-madm/main/Heatmap%20Interactivo/Heatmap_Interactivo.html?token=ANOBI62VVCSVXQCX5IWW4HS74DG2A) de este gráfico.
 
