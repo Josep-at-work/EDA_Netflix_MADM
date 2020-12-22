@@ -9,22 +9,64 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+```{r}
+library(scales)
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+ks <- function (x) { number_format(accuracy = 1,
+                                   scale = 1/1000,
+                                   suffix = "K",
+                                   big.mark = ",")(x) }
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+```{r, fig.align = 'center', fig.width = 5, fig.height = 3}
+coeff <- max(scores$Score) / max(month_scores$n)
+n_max_limit <- max(month_scores$n) + 10^4
+n_min_limit <- plyr::round_any((n_max_limit - min(month_scores$n))*2, 10^4)
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+gg1 <- ggplot(data = month_scores, aes(x = Month))
+
+
+gg2 <- gg1 +
+  geom_bar(aes(y = n), fill = "darkcyan", stat = "identity") +
+  coord_cartesian(ylim = c(n_min_limit, n_max_limit)) +
+  geom_point(aes(y = Mean_Score/coeff)) +
+  geom_line(aes(y = Mean_Score/coeff), size = 1, group = 1) +
+  scale_y_continuous(
+    name = "Número de valoraciones",
+    labels = ks,
+    sec.axis = sec_axis(~.*coeff, name = "Promedio puntuación")
+  ) +
+  labs(title = "Valoraciones por mes", x = "") +
+  geom_text(aes(y = n, label = ks(n)), angle = 0, vjust = -0.5, size = 3) +
+  theme_minimal()
+
+gg2
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r, fig.align = 'center', fig.width = 5, fig.height = 3}
+coeff <- max(scores$Score) / max(day_week_scores$n)
+n_max_limit <- max(day_week_scores$n) + 10^4
+n_min_limit <- plyr::round_any(min(day_week_scores$n) - 10^4, 10^4, f = floor)
+
+gg1 <- ggplot(data = day_week_scores, aes(x = Day_Week))
+
+
+gg2 <- gg1 +
+  geom_bar(aes(y = n), fill = "darkcyan", stat = "identity") +
+  coord_cartesian(ylim = c(n_min_limit, n_max_limit)) +
+  geom_point(aes(y = Mean_Score/coeff)) +
+  geom_line(aes(y = Mean_Score/coeff), group = 1) +
+  scale_y_continuous(
+    name = "Número de valoraciones",
+    labels = ks,
+    sec.axis = sec_axis(~.*coeff, name = "Promedio puntuación")
+  ) +
+  labs(title = "Valoraciones por día de la semana", x = "") +
+  geom_text(aes(y = n, label = ks(n)), angle = 0, vjust = -0.5, size = 3) +
+  theme_minimal()
+
+
+gg2
+```

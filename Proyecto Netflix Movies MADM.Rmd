@@ -17,7 +17,7 @@ toccolor: blue
 urlcolor: blue
 always_allow_html: true
 ---
-\fontsize{8}{8}
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
@@ -25,6 +25,9 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE
 )
+
+#\fontsize{8}{8}
+
 library(tidyverse)
 library(knitr)
 library(here)        #Permite ejecutar este rmd desde cualquier carpeta
@@ -43,6 +46,8 @@ library(dplyr) #relacionar dataframes
 library(webshot) #para mostrar los gráficos interactivos en el pdf
 #webshot::install_phantomjs()
 library(kableExtra)
+library(scales)
+
 rm(list=ls())
 cat("\014")
 ```
@@ -399,22 +404,35 @@ kable(day_week_scores %>% arrange(desc(n)))
 ```
 
 
+```{r}
+ks <- function (x) { number_format(accuracy = 1,
+                                   scale = 1/1000,
+                                   suffix = "K",
+                                   big.mark = ",")(x) }
+```
+
+
 ```{r, fig.align = 'center', fig.width = 5, fig.height = 3}
 coeff <- max(scores$Score) / max(month_scores$n)
+n_max_limit <- max(month_scores$n) + 10^4
+n_min_limit <- plyr::round_any((n_max_limit - min(month_scores$n))*2, 10^4)
 
 gg1 <- ggplot(data = month_scores, aes(x = Month))
 
 
 gg2 <- gg1 +
-  geom_bar(aes(y = n), stat = "identity") +
+  geom_bar(aes(y = n), fill = "darkcyan", stat = "identity") +
+  coord_cartesian(ylim = c(n_min_limit, n_max_limit)) +
   geom_point(aes(y = Mean_Score/coeff)) +
-  geom_line(aes(y = Mean_Score/coeff), group = 1) +
+  geom_line(aes(y = Mean_Score/coeff), size = 1, group = 1) +
   scale_y_continuous(
     name = "Número de valoraciones",
-    sec.axis = sec_axis(~.*coeff, name = "Mean Score")
+    labels = ks,
+    sec.axis = sec_axis(~.*coeff, name = "Promedio puntuación")
   ) +
-  labs(title)
-
+  labs(title = "Valoraciones por mes", x = "") +
+  geom_text(aes(y = n, label = ks(n)), angle = 0, vjust = -0.5, size = 3) +
+  theme_minimal()
 
 gg2
 
@@ -422,22 +440,30 @@ gg2
 
 ```{r, fig.align = 'center', fig.width = 5, fig.height = 3}
 coeff <- max(scores$Score) / max(day_week_scores$n)
+n_max_limit <- max(day_week_scores$n) + 10^4
+n_min_limit <- plyr::round_any(min(day_week_scores$n) - 10^4, 10^4, f = floor)
 
 gg1 <- ggplot(data = day_week_scores, aes(x = Day_Week))
 
 
 gg2 <- gg1 +
-  geom_bar(aes(y = n), stat = "identity") +
+  geom_bar(aes(y = n), fill = "darkcyan", stat = "identity") +
+  coord_cartesian(ylim = c(n_min_limit, n_max_limit)) +
   geom_point(aes(y = Mean_Score/coeff)) +
   geom_line(aes(y = Mean_Score/coeff), group = 1) +
   scale_y_continuous(
     name = "Número de valoraciones",
-    sec.axis = sec_axis(~.*coeff, name = "Mean Score")
-  )
+    labels = ks,
+    sec.axis = sec_axis(~.*coeff, name = "Promedio puntuación")
+  ) +
+  labs(title = "Valoraciones por día de la semana", x = "") +
+  geom_text(aes(y = n, label = ks(n)), angle = 0, vjust = -0.5, size = 3) +
+  theme_minimal()
 
 
 gg2
 ```
+
 
 ```{r, warning=FALSE, message=FALSE}
 weekend_weekday_scores <- scores_dates %>%
