@@ -398,37 +398,45 @@ kable(day_week_scores %>% arrange(desc(n)))
 
 ```
 
-```{r, fig.align = 'center', fig.width = 5, fig.height = 3}
-ggplot(data = month_scores, aes(x = Month, y = n)) +
-  geom_bar(stat = "identity") +
-  scale_x_discrete(drop = FALSE, breaks = levels(scores$Month))
 
-ggplot(data = day_week_scores, aes(x = Day_Week, y = n)) +
-  geom_bar(stat = "identity") +
-  scale_x_discrete(drop = FALSE, breaks = levels(scores$Day_Week))
+```{r, fig.align = 'center', fig.width = 5, fig.height = 3}
+coeff <- max(scores$Score) / max(month_scores$n)
+
+gg1 <- ggplot(data = month_scores, aes(x = Month))
+
+
+gg2 <- gg1 +
+  geom_bar(aes(y = n), stat = "identity") +
+  geom_point(aes(y = Mean_Score/coeff)) +
+  geom_line(aes(y = Mean_Score/coeff), group = 1) +
+  scale_y_continuous(
+    name = "Número de valoraciones",
+    sec.axis = sec_axis(~.*coeff, name = "Mean Score")
+  ) +
+  labs(title)
+
+
+gg2
+
 ```
 
 ```{r, fig.align = 'center', fig.width = 5, fig.height = 3}
-coeff <- 0.00001
+coeff <- max(scores$Score) / max(day_week_scores$n)
 
-ggplot(data = month_scores, aes(x = Month,)) +
+gg1 <- ggplot(data = day_week_scores, aes(x = Day_Week))
+
+
+gg2 <- gg1 +
   geom_bar(aes(y = n), stat = "identity") +
-  geom_line(aes(y = Mean_Score / coeff))+
-  scale_x_discrete(drop = FALSE, breaks = levels(scores$Month))+
+  geom_point(aes(y = Mean_Score/coeff)) +
+  geom_line(aes(y = Mean_Score/coeff), group = 1) +
   scale_y_continuous(
     name = "Número de valoraciones",
     sec.axis = sec_axis(~.*coeff, name = "Mean Score")
   )
 
 
-
-
-
-
-
-ggplot(data = day_week_scores, aes(x = Day_Week, y = n)) +
-  geom_bar(stat = "identity") +
-  scale_x_discrete(drop = FALSE, breaks = levels(scores$Day_Week))
+gg2
 ```
 
 ```{r, warning=FALSE, message=FALSE}
