@@ -543,12 +543,12 @@ par(mfrow = c(1,1))
 
 ## Análisis top 10 películas con más valoraciones por año de valoración
 ```{r}
-table7.1 <- group_by(scores, MovieID, Year=year(Date)) %>%
+votaciones_ano <- group_by(scores, MovieID, Year=year(Date)) %>%
   summarise(Votes = n_distinct((UserID)), Mean = round(mean(Score),3))  #agrupamos por pelicula y año en que fue valorada
 
 top10_votada <- head(arrange(movie_scores[,c('MovieID','n','Mean_Score','Title')], desc(n)), 10)  #las 10 más votadas
 
-movies_onfire <- filter(table7.1, MovieID %in% top10_votada$MovieID) #onfire porque es un heatmap y son las pelis mas votadas
+movies_onfire <- filter(votaciones_ano, MovieID %in% top10_votada$MovieID) #onfire porque es un heatmap y son las pelis mas votadas
 
 movies_onfire$Ranking <- movies_onfire$MovieID    
 for (i in 1:10) {
@@ -559,20 +559,21 @@ for (i in 1:10) {
 }                                  #Ordenamos las pelis según el top10
 top10_votada$Ranking=1:10
 kable(top10_votada[,c('Ranking','Title', 'n')], align = "c", caption = "Top 5 Usuarios") %>%
-  kable_styling(latex_options = "hold_position", font_size = 8) %>%
-  column_spec(1,width = "4cm")
+kable_styling(latex_options = c("striped"),
+font_size = 8) %>%
+column_spec(1,width = "4cm")
 ```
 Para visualizar la distribución de votaciones por año que obtubieron las 10 peliculas más votadas de *Netflix*, creamos un Heatmap
 
-```{r, fig.align = 'center', fig.width = 4, fig.height = 4}
+```{r, fig.align = 'center', fig.width = 8, fig.height = 6}
 # 1r creamos una secuencia significativa de intervalos
 # barplot(height = movies_onfire$votes, ylim =c(1,80000)) #Cambiando los limites de y que intervalos son significativos
 
 secuencia <- cut(movies_onfire$Votes,
                  breaks = c(min(movies_onfire$votes), 1000, 2000, 3000, 5000, 7000, 10000, 15000,
                             20000, 25000, 30000,35000,40000,45000,50000,max(movies_onfire$votes)),
-                 labels=c('0<','1k-2k', '2k-3k', '3k-5k', '5k-7k', '7k-10k', '10k-15k', '15k-20k',
-                          '20k-25k', '25k-30k', '30k-35k', '35k-40k', '40k-45k', '45k-50k','>85k'),
+                 labels=c('0<1K','1K-2K', '2K-3K', '3K-5K', '5K-7K', '7K-10K', '10K-15K', '15K-20K',
+                          '20K-25K', '25K-30K', '30K-35K', '35K-40K', '40K-45K', '45K-50K','>85K'),
                  include.lowest = T) #15 values
 # 2n creamos una paleta de 15 colores
 # library(RColorBrewer)
@@ -587,9 +588,9 @@ ggplot(movies_onfire, aes(text = paste('Votes:', Votes), ID = MovieID, y = Ranki
   scale_y_continuous(breaks=10:1) +             
   scale_x_continuous(breaks=1999:2005) +
   scale_fill_manual(values = mycolors) +              #secuencia de colores
-  labs(fill = 'Votes')                            #Legend name
+  labs(fill = 'Votes') +
+  theme(legend.position="bottom")
 ```
-También puedes visualizar la [versión interactiva](https://rawcdn.githack.com/paul-rami/proyecto-netflix-movies-madm/main/Heatmap%20Interactivo/Heatmap_Interactivo.html?token=ANOBI62VVCSVXQCX5IWW4HS74DG2A) de este gráfico.
 
 ## Evolución del score promedio de las 10 películas con más valoraciones
 ```{r, fig.align = 'center', fig.width = 10, fig.height = 3}
