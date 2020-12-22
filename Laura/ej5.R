@@ -317,3 +317,38 @@ ggcorrplot(corr, hc.order = TRUE,
   ggtitle("Correlación p-valores") +
   theme_bw()
 
+##violinplot new code
+top5
+#sample = head(movie_scores[order(movie_scores$n, decreasing = TRUE),],5)
+#top5 <- filter(scores, MovieID %in% sample$MovieID)
+top5 <- top5[order(top5$, decreasing = TRUE),]
+
+##volver todo a character:
+sample$MovieID <- as.character(sample$MovieID)
+top5 %<>% left_join(sample, by = 'MovieID')
+top5 = head(top5[order(top5$Mean_Score, decreasing = TRUE),],5)
+
+
+##solo me interesa la media
+sample
+interested = sample[,6]
+#remove(top5)
+top5 <- filter(scores, MovieID %in% sample$MovieID)
+top5
+#añadir a mi top5 la media con un left join:
+##antes hay que convertir a characte el MovieID
+sample$MovieID <- as.character(sample$MovieID)
+top5$MovieID <- as.character(top5$MovieID)
+top5 %<>% left_join(sample, by = 'MovieID')
+top5
+top5 <- top5[order(top5$Mean_Score, decreasing = TRUE),]
+
+
+remove(top5)
+
+#########ordenar
+
+muestra <- sample(c("6037", "8387", "10730", "313", "9645")
+                  orden <- names(sort(table(muestra), decreasing=TRUE))
+                  muestra <- data.frame(valoracion=factor(muestra, levels=orden))
+                  top5
