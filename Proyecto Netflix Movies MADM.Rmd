@@ -286,10 +286,9 @@ movie_scores_table <- movie_scores %>%
   select(-MovieID, -Release_Year) %>%
   relocate(Title, n, Sum_Score, Mean_Score, SD_Score, Mode_Score, Mean_Score)
 
-kable(head(movie_scores_table %>% arrange(desc(Mean_Score))), digits = 3, align = "c", caption = "Top 5 Usuarios") %>%
-kable_styling(latex_options = c("striped"),
-font_size = 8) %>%
-column_spec(1,width = "4cm")
+kable(head(movie_scores_table %>% arrange(desc(Mean_Score))), digits = 3, align = "c", caption = "Estadísticos puntuaciones") %>%
+  kable_styling(latex_options = "hold_position", font_size = 8) %>%
+  column_spec(1,width = "4cm")
 
 ```
 
@@ -560,13 +559,12 @@ for (i in 1:10) {
 }                                  #Ordenamos las pelis según el top10
 top10_votada$Ranking=1:10
 kable(top10_votada[,c('Ranking','Title', 'n')], align = "c", caption = "Top 5 Usuarios") %>%
-kable_styling(latex_options = c("striped"),
-font_size = 8) %>%
-column_spec(1,width = "4cm")
+  kable_styling(latex_options = "hold_position", font_size = 8) %>%
+  column_spec(1,width = "4cm")
 ```
 Para visualizar la distribución de votaciones por año que obtubieron las 10 peliculas más votadas de *Netflix*, creamos un Heatmap
 
-```{r, fig.align = 'center', fig.width = 8, fig.height = 6}
+```{r, fig.align = 'center', fig.width = 4, fig.height = 4}
 # 1r creamos una secuencia significativa de intervalos
 # barplot(height = movies_onfire$votes, ylim =c(1,80000)) #Cambiando los limites de y que intervalos son significativos
 
@@ -630,9 +628,8 @@ df <- scores %>% group_by(UserID) %>%
   mutate(percent= NN / sum(NN))
 top_5_users <- head(df[order(df$NN, decreasing = TRUE),],5)
 knitr::kable(top_5_users, digits = 5, align = "c", caption = "Top 5 Usuarios") %>%
-kable_styling(latex_options = c("striped"),
-font_size = 8) %>%
-column_spec(1,width = "4cm")
+  kable_styling(latex_options = "hold_position", font_size = 8) %>%
+  column_spec(1,width = "4cm")
 
 ```
 
