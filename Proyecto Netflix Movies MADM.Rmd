@@ -57,6 +57,8 @@ cat("\014")
 
 # Objetivo
 
+Este documento presenta los resultados del análisis exploratorio realizado sobre una muestra aleatoria de las puntuaciones de 250 películas de *Netflix*. El AED explora la distribución de las puntuaciones por distintos períodos de tiempo y compara los estadísticos de las películas que han recibido más votaciones. 
+
 # Data wrangle
 
 ## Importación de datos
@@ -214,11 +216,10 @@ max_score = max(scores$Score)
 
 ```
 
-El dataset `scores` de valoraciones de Netflix contiene `r n_rows` valoraciones de películas, realizadas por `r n_users` usuarios diferentes para un catálogo de `r n_movies` películas con fecha de lanzamiento en Netflix desde `r min_rel_year` hasta `r max_rel_year`. Las valoraciones han sido realizadas en entre los años `r min_score_year` y `r max_score_year`, usando una escala ordinal del `r min_score` al `r max_score`.  
+El dataset `scores` de valoraciones de Netflix contiene `r n_rows` valoraciones de películas, realizadas por `r n_users` usuarios diferentes para un catálogo de `r n_movies` películas con fecha de lanzamiento en Netflix desde `r min_rel_year` hasta `r max_rel_year`. Las valoraciones han sido realizadas entre los años `r min_score_year` y `r max_score_year`, usando una escala ordinal del `r min_score` al `r max_score`.  
 
 Veamos más informacion sobre los datos:
 ```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
-
 summary(scores)
 ```
 
@@ -304,7 +305,6 @@ kable(head(scores_dates_table %>% arrange(Date),3), digits = 3, align = "c", cap
   kable_styling(latex_options = "hold_position", font_size = 8) %>%
   column_spec(1,width = "4cm")
 ```
-
 
 
 ## Análisis del número de valoraciones por més y día de la semana
@@ -471,7 +471,7 @@ ggplot(data = titles,aes(x=Release_Year, y=..density..)) +
   labs(x='Año de estreno', y='Densidad', title='Distribución de los estrenos')
 
 ```
-En nuestra muestra del `r round(100*250/17770,2)`% del total de las películas de netflix , el año con más estrenos en fue el `r max_n_year` con `r max_n`. Por otra parte en un 50% de los años se estrenaron como mucho `r quantile(movies_per_year$n, 0.5)` películas.
+En nuestra muestra del `r round(100*250/17770,2)`% del total de las películas de netflix , el año con más estrenos fue el `r max_n_year` con `r max_n`. Por otra parte en un 50% de los años se estrenaron como mucho `r quantile(movies_per_year$n, 0.5)` películas.
 
 ## Análisis top 10 películas con más valoraciones por año de valoración
 ```{r}
@@ -489,8 +489,7 @@ for (i in 1:10) {
   indexes <- which(movies_onfire$MovieID == movie)
   movies_onfire$Ranking <- replace(movies_onfire$Ranking, indexes, i)
   count=i
-}
-#Ordenamos las pelis según el top10
+} #Ordenamos las pelis según el top10
 top10_votada$Ranking=1:10
 ```
 
@@ -516,7 +515,6 @@ secuencia <- cut(movies_onfire$Votos,
 # library(RColorBrewer)
 nb.cols <- 15
 mycolors <- colorRampPalette(brewer.pal(9, "YlOrRd"))(nb.cols)
-
 ```
 
 ```{r, fig.align = 'center', fig.width = 6, fig.height = 4}
@@ -555,8 +553,6 @@ sample = head(movie_scores[order(movie_scores$n, decreasing = TRUE),],5)
 A continuación, representamos las 5 películas que recogen más valoraciones en un `treemap`:
 
 ```{r, fig.align = 'center', fig.width = 5, fig.height = 3, echo = FALSE}
-
-
 (ptm<-ggplot(sample,aes(area=n,fill=Title,
                         subgroup = n, subgroup2 = round(Mean_Score,2),
                     label=Title))+
@@ -654,6 +650,19 @@ plot2
 ```
 
 ## Estudios adicionales
+
+``````{r, fig.align = 'center', fig.width = 5, fig.height = 3, echo = FALSE}
+scores %>% group_by(UserID) %>% summarise(Count=n(), Percent=(n()/nrow(.))*100) -> Users
+
+Users %>% group_by(Count) %>% summarise(Number_of_Users = n(), Percent=100*n()/nrow(.)) -> num_users
+num_users %<>% arrange(desc(Count)) 
+
+ggplot(data = num_users ,aes(Count, Percent)) + 
+  geom_bar(stat='identity', colour="black", fill="lightblue")+
+  labs(y='%',x='Número de usuarios', title='%Usuarios correspondiente al número de votaciones')
+```
+
+
 
 **Buscar los top 5 usuarios que más películas han puntuado. Luego, comparar con el top 1 usuario qué películas han dejado de evaluar el resto.**
 
