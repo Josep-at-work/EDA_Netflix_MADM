@@ -459,7 +459,7 @@ nb.cols <- 15
 mycolors <- colorRampPalette(brewer.pal(9, "YlOrRd"))(nb.cols)
 ```
 
-```{r, fig.align = 'center', fig.width = 4, fig.height = 3}
+```{r, fig.align = 'center', fig.width = 5, fig.height = 4}
 ggplot(movies_onfire, aes(text = paste('Votos:', Votos), ID = MovieID, 
                           y = Ranking, x = Year )) +  
   geom_tile(aes(fill = secuencia)) +                  
