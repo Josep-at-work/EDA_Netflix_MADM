@@ -49,6 +49,7 @@ library(webshot) #para mostrar los gráficos interactivos en el pdf
 library(kableExtra)
 library(scales)
 library(formatR)
+library(gridExtra)
 
 rm(list=ls())
 cat("\014")
@@ -540,9 +541,6 @@ top5$Score <- as.integer(top5$Score)
 
 
 ```{r, fig.align = 'center', fig.width = 5, fig.height = 3, echo = FALSE}
-##solo me interesa la media
-interested = sample[,6]
-#remove(top5)
 top5 <- filter(scores, MovieID %in% sample$MovieID)
 #añadir a mi top5 la media con un left join:
 ##antes hay que convertir a characte el MovieID
@@ -571,30 +569,38 @@ ggplot(data = top5, aes(x = MovieID, y = Score)) +
 
 ## Estudios adicionales
 
-``````{r, fig.align = 'center', fig.width = 5, fig.height = 3, echo = FALSE}
+``````{r, fig.align = 'center', fig.width = 11, fig.height = 3, echo = FALSE}
 scores %>% group_by(UserID) %>% summarise(Count=n(), Percent=(n()/nrow(.))*100) -> Users
 
 Users %>% group_by(Count) %>% summarise(Number_of_Users = n(), Percent=100*n()/nrow(.)) -> num_users
 num_users %<>% arrange(desc(Count)) 
 
-ggplot(data = num_users ,aes(Count, Percent)) + 
-  geom_bar(stat='identity', colour="black", fill="lightblue")+
-  labs(y='%',x='Número de usuarios', title='%Usuarios correspondiente al número de votaciones')
-```
+plot_all = ggplot(data = num_users ,aes(Count, Percent)) + 
+  geom_bar(stat='identity', colour="darkcyan", fill="lightblue")+
+  labs(y='% Usuarios',x='Número de películas votadas', title='Número de películas votadas por todos los usuarios', subtitle = "Representado como % sobre el total de usuarios" ) +theme_bw()+
+  theme(plot.subtitle=element_text(size=8, hjust=1, face="italic", color="black"))
 
+plot_all2 = ggplot(data = num_users ,aes(Count, Number_of_Users)) + 
+  geom_bar(stat='identity', colour="darkcyan", fill="lightblue")+
+  labs(y='Usuarios',x='Número de películas votadas', title='Número de películas votadas por los usuarios más activos', subtitle = "Ampliación de la gráfica anterior" ) + theme_bw()+
+xlim(80,250) + 
+  theme(plot.subtitle=element_text(size=8, hjust=1, face="italic", color="black"))
+grid.arrange(plot_all, plot_all2, ncol=2)
+```
+Como se observa en los gráficos anteriores, la mayoría de usuarios no se muestran muy activos puntuando las películas, concretamente el `r round(tail(num_users$Percent,1),1)` % de los usuarios han puntuado solamente `r tail(num_users$Count,1)` película.
 
 
 **Buscar los top 5 usuarios que más películas han puntuado. Luego, comparar con el top 1 usuario qué películas han dejado de evaluar el resto.**
 
 Primero vamos a buscar el número de total de películas que han sido evaluadas por usuario: 
 
-```{r, fig.align = 'center', fig.width = 10, fig.height = 3}
+```{r echo=FALSE, fig.align='center', fig.height=3, fig.width=10}
 #número de veces que ha votado cada usuario
 num_votos_por_usuario = aggregate(scores$UserID, by = list(Usuario=scores$UserID), length)
 ```
 
 En segundo lugar, seleccionaremos el *top 5 usuarios* que más películas han puntuado,
-```{r, fig.align = 'center', fig.width = 10, fig.height = 3}
+```{r echo=FALSE, fig.align='center', fig.height=3, fig.width=10}
 
 df <- scores %>% group_by(UserID) %>% count()
 df <- scores %>% group_by(UserID) %>% summarise(NN = n())
@@ -625,7 +631,7 @@ top_pelis_5 = scores %>%
 ```
 
 El usuario que más películas ha puntuado es el _305344_, entonces vamos a comparar las películas que este usuario con el resto de usuarios.
-```{r, fig.align = 'center', fig.width = 10, fig.height = 3}
+```{r, fig.align = 'center', fig.width = 10, fig.height = 3, include=FALSE}
 top_pelis_1$comp2 <- as.integer(top_pelis_1$MovieID %in% top_pelis_2$MovieID)
 top_pelis_1$comp3 <- as.integer(top_pelis_1$MovieID %in% top_pelis_3$MovieID)
 top_pelis_1$comp4 <- as.integer(top_pelis_1$MovieID %in% top_pelis_4$MovieID)
@@ -648,9 +654,12 @@ films_5 = Dif_1_5$Title#Películas que el `top_5` no ha evaluado pero el `top_1`
 ```
 
  
- Aquí tenemos las `18 películas` el `top_3` *no ha puntuado* pero el `top_1` si:
+ Aquí tenemos tres de las `18 películas` el `top_3` *no ha puntuado* pero el `top_1` si:
 ```{r}
-films_3
+knitr::kable(head(films_3,3), digits = 5, col.names = NULL, align = "l", caption = "3 de las películas que no ha votado el top_3") %>%
+  kable_styling(latex_options = "hold_position", font_size = 8) %>%
+  column_spec(1,width = "4cm")
+
 ```
 
 Este proceso debería realizarse con el resto de usuarios, sin embargo, por cuestión de espacio no vamos a ejecutar los códigos. Finalmente, obtendríamos que, la diferencia del top 2 con el top 1 son *3 películas*, mientras que el top 4 con el top 1 se diferencia en *26 películas* y, por último, la diferencia con el último usuario asciende a *41 películas*.
@@ -673,7 +682,7 @@ ggcorrplot(corr, method = 'circle', type = 'lower', lab = TRUE) +
   theme(legend.position="none")
 ```
 
-Para terminar, hemos creado un correolograma de la tabla `scores_dates`, solamente con los valores numéricos. Luego, se ha incluido también un correolograma con los p-valores de las dimensiones anteriores, para saber si estas son o no son significantes. Las variables que presentan correlación son las sombreadas en color. Después, la tabla de al lado, señala aquellas variables que no son significantes en nuestro análisis.
+Para terminar, hemos creado un correolograma de la tabla `scores_dates`, solamente con los valores numéricos. Luego, se ha incluido también un correolograma con los p-valores de las dimensiones anteriores, para saber si estas son o no son significantes. Tras ver los resultados, se detecta que no existe ninguna correlación importante entre las dimensiones. Solo destaca la correlación entre `n_month` y `semana`, la cual no aporta ninguna información, pues es lógico que a medida que incremente la semana, el mes también lo haga. El resto de correlaciones son muy débiles, solo destacariamos la relación entre `Score` - `Year` y `Release_Year` - `Score` pero al ser valores tan pequeños, no podemos concluir que existe correlación.
  
 ```{r, echo=FALSE, fig.align = 'center', fig.width = 10, fig.height = 3, include= FALSE}
 #calcular matriz de corr
@@ -682,7 +691,7 @@ corr <- round(cor(scores_dates[-c(3,6,12:14)]),1) #scores_dates[-c(3,6,12:14)] q
 p.mat <- cor_pmat(scores_dates[-c(3,6,12:14)])
 ```
 
-```{r, fig.align = 'center', fig.width = 10, fig.height = 6, echo=FALSE}
+```{r, fig.align = 'center', fig.width = 10, fig.height = 6, echo=FALSE, include=FALSE}
 require(gridExtra)
 plot1 <- ggcorrplot(corr, method = 'circle', type = 'lower', lab = FALSE, hc.order = TRUE, ggtheme = ggplot2::theme_gray,
 colors = c("ivory2", "white", "indianred4")) +
@@ -702,6 +711,9 @@ p-valores") +
 plot3 <- plot3 +      theme(legend.position="top",
            plot.margin=unit(c(0.5,1,0,1), "cm"),
            panel.margin=unit(c(0.5,1,0,1), "cm"))  + theme(axis.text.x = element_text(angle = 50, hjust = 1))
+```
+
+```{r, echo=FALSE, fig.align = 'center', fig.width = 10, fig.height = 6}
 grid.arrange(plot1, plot3, ncol=2)
 ```
 
