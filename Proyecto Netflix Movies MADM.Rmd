@@ -57,7 +57,9 @@ cat("\014")
 
 # Objetivo
 
-Este documento presenta los resultados del análisis exploratorio realizado sobre una muestra aleatoria de las puntuaciones de 250 películas de *Netflix*. El AED explora la distribución de las puntuaciones por distintos períodos de tiempo y compara los estadísticos de las películas que han recibido más votaciones. 
+Este documento presenta los resultados del análisis exploratorio realizado sobre valoraciones de usuarios de películas de *Neflix* *. En este informe se explora la distribución de las puntuaciones por distintos períodos de tiempo, se comparan los estadísticos de las películas que han recibido más votaciones y se analiza la distribución del número de votaciones por usuario. 
+
+*Datos extraidos del [dataset "Neflix Prize Data" en Kaggle](https://www.kaggle.com/netflix-inc/netflix-prize-data).
 
 # Data wrangle
 
@@ -163,7 +165,7 @@ scores %<>% left_join(titles, by = 'MovieID')
 ```
 
 ### Exportación e importación de datos limpios para su análisis
-**Datos puntuaciones películas**
+Datos puntuaciones películas
 ```{r Write csv datos limpios join, eval=FALSE, include=TRUE}
 write_csv(scores,here("Data", "nuestras_pelis.csv"))
 ```
@@ -173,7 +175,7 @@ scores = read_csv(here("Data","nuestras_pelis.csv"))
 scores %<>% mutate(across(c(MovieID,UserID,Score,Release_Year), as.integer), Date = as.Date(Date))
 ```
 
-**Datos títulos películas**
+Datos títulos películas
 ```{r eval=FALSE, include=FALSE}
 nuestros_movie_ids <- tibble(MovieID = unique(scores$MovieID))
 nuestros_titles <- titles %>%
@@ -315,7 +317,7 @@ month_scores <- scores_dates %>%
 
 day_week_scores <- scores_dates %>%
   group_by(Day_Week) %>%
-  summarise(Mean_Score = mean(Score), n = n())
+  summarise(Mean_Score = mean(Score), n = n(), n_day_week = mean(n_day_week))
 
 kable(month_scores %>% arrange(desc(n)))
 kable(day_week_scores %>% arrange(desc(n)))
@@ -327,7 +329,6 @@ coeff <- max(scores$Score) / max(month_scores$n)
 n_max_limit <- max(month_scores$n) + 10^4
 n_min_limit <- plyr::round_any((n_max_limit - min(month_scores$n))*2, 10^4)
 ```
-
 
 ```{r echo=TRUE, fig.align='center', fig.height=3, fig.width=5}
 ggplot(data = month_scores, aes(x = Month)) +
@@ -347,11 +348,14 @@ ggplot(data = month_scores, aes(x = Month)) +
 
 ```
 
+En este primer gráfico se puede observar que hay una actividad considerablemente mayor de actividad finales de verano y durante el otoño. Sin embargo, la puntuación media de las valoraciones apenas fluctua y se situa en torno al 3.5.
+
 ```{r include=FALSE}
 coeff <- max(scores$Score) / max(day_week_scores$n)
 n_max_limit <- max(day_week_scores$n) + 10^4
 n_min_limit <- plyr::round_any(min(day_week_scores$n) - 10^4, 10^4, f = floor)
 ```
+
 
 ```{r echo=TRUE, fig.align='center', fig.height=3, fig.width=5}
 ggplot(data = day_week_scores, aes(x = Day_Week)) +
@@ -370,82 +374,24 @@ ggplot(data = day_week_scores, aes(x = Day_Week)) +
 ```
 
 
-```{r echo=TRUE, message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, include=FALSE}
 weekend_weekday_scores <- scores_dates %>%
   group_by(Is_Weekend) %>%
   summarise(Mean_Score = mean(Score), n = n())
 
 kable(weekend_weekday_scores)
 
-n_scores_weekend = weekend_weekday_scores  %>% filter(Is_Weekend == TRUE) %>% select(n)
+n_scores_weekend = weekend_weekday_scores %>% filter(Is_Weekend == "Weekend") %>% select(n) %>% as.integer()
+n_scores_mon_wed = day_week_scores %>% filter(n_day_week <= 3) %>% summarise(n = sum(n)) %>% as.integer()
+
 n_scores = sum(weekend_weekday_scores$n)
-n_scores_weekend_weekday_ratio = n_scores_weekend / n_scores 
-#el 18% de las valoraciones son en fin de semana, que es menos que el 28% de días que son fin de semana
+
+n_scores_mon_wed_ratio = n_scores_mon_wed / n_scores
+n_scores_weekend_ratio = n_scores_weekend / n_scores 
+
+weekend_weekdays_ratio = 2 / 7
 ```
-
-
-```{r puntuaciones según quarters, eval=FALSE, fig.align='center', fig.height=3, fig.width=5, include=FALSE}
-##Primero me creo una tabla seleccionando los campos que quiero comparar
-cols <- c(4,13)
-newtab=scores_dates[,cols]
-
-##Aquí tenemos los tres ``Q`` separados:
-Q1 = filter(newtab, Month == 'Jan' |Month == 'Feb' | Month == 'Mar' | Month == 'Apr')
-Q2 = filter(newtab, Month == 'May' | Month == 'Jun'| Month == 'Jul' | Month == 'Aug')
-Q3 = filter(newtab, Month == 'Sep' |Month == 'Oct' | Month == 'Nov' | Month == 'Dec')
-
-##Procedemos a realizar los gráficos pertinentes
-q1 <- aggregate(Q1$Score, by=list(Monthh=Q1$Month), FUN = sum)
-q1 <- as.data.frame(q1)
-names(q1) <- c("Month", "Score")
-gg1 <- ggplot(q1, aes(x = Month, y = Score, fill = Month)) + 
-  geom_col() +
-  geom_text(aes(label = Score), vjust = -0.5) +
-  scale_y_continuous(limit = c(0,500000,1000000,1500000, 2000000)) +
-  geom_bar(stat='identity') + geom_point() + expand_limits(x=0,y=0) + 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), axis.line = element_line(colour = "black")) +
-  scale_fill_manual(values=c("#003057", "#B52555", "#A0D1CA", "#7A99AC" )) +
-  ggtitle ("Puntuaciones totales del 1Q") +
-  theme_bw()
-
-q2 <- aggregate(Q2$Score, by=list(Monthh=Q2$Month), FUN = sum)
-q2 <- as.data.frame(q2)
-names(q2) <- c("Month", "Score")
-gg2 <- ggplot(q2, aes(x = Month, y = Score, fill = Month)) + 
-  geom_col() +
-  geom_text(aes(label = Score), vjust = -0.5)+
-  scale_y_continuous(limit = c(0,600000)) +
-  geom_bar(stat='identity') + geom_point() + expand_limits(x=0,y=0) + 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), axis.line = element_line(colour = "black")) +
-  scale_fill_manual(values=c("#003057", "#B52555", "#A0D1CA", "#7A99AC" )) +
-  ggtitle ("Puntuaciones totales del 2Q") +
-  theme_bw()
-
-q3 <- aggregate(Q3$Score, by=list(Monthh=Q3$Month), FUN = sum)
-q3 <- as.data.frame(q3)
-names(q3) <- c("Month", "Score")
-gg3 <- ggplot(q3, aes(x = Month, y = Score, fill = Month)) + 
-  geom_col() +
-  geom_text(aes(label = Score), vjust = -0.5)+
-  scale_y_continuous(limit = c(0,600000)) +
-  geom_bar(stat='identity') + geom_point() + expand_limits(x=0,y=0) + 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), axis.line = element_line(colour = "black")) +
-  scale_fill_manual(values=c("#003057", "#B52555", "#A0D1CA", "#7A99AC" )) +
-  ggtitle ("Puntuaciones totales del 3Q") +
-  theme_bw()
-```
-
-
-```{r eval=FALSE, include=FALSE}
-par(mfrow = c(3,1))
-gg1
-gg2
-gg3
-par(mfrow = c(1,1))
-```
+En cuanto a las valoraciones por días de la semana observamos una diferencia muy significativa entre la actividad de los primeros días de la semana y finales de semana. Antes de mitad de semana, entre el lunes y el miercoles, ya se acumulan de media un `r percent(n_scores_mon_wed_ratio)` de las valoraciones. Si comparamos el número de valoraciones entre los días entre semana y del fin de semana, podemos ver como solo el `r percent(n_scores_weekend_ratio)` de las valoraciones son el fin de semana, cuando un `r percent(weekend_weekdays_ratio)` de los días son fin de semana. En cuanto a la puntuación media, esta es incluso más estable que en análisis por meses, también en torno al 3.5.
 
 
 ## Distribución películas estrenadas por año
@@ -543,7 +489,7 @@ ggplot(movies_onfire, aes(Year, Mean, group=MovieID, colour=factor(MovieID))) +
   labs(y='Puntuación Media', x='Año', title='Puntuación Media por año, top 10') +
   theme(legend.position="none")
 ```
-El 2000 parece que fue un punto de inflección, 3 películas se estrenaron ese año y las ya existentes sufrieron un cambio en su puntuación media ya sea para mal como fue el caso de *Moonstruck* y *Stripes*, o para bien como en el caso de Annie Hall. 
+El 2000 parece que fue un punto de inflexión, 3 películas se estrenaron ese año y las ya existentes sufrieron un cambio en su puntuación media ya sea para mal como fue el caso de *Moonstruck* y *Stripes*, o para bien como en el caso de Annie Hall. 
 
 ## Comparación top 5 películas con más valoraciones
 ```{r, include=FALSE}
@@ -590,34 +536,11 @@ top5$MovieID <- as.factor(top5$MovieID)
 top5$Release_Year <- as.factor(top5$Release_Year)
 top5$Score <- as.integer(top5$Score)
 
-p<-ggplot(top5, aes(x=MovieID, y=Score, color=Release_Year)) +
-  xlab('Identificador Película') + 
-  ylab('Puntuación') +
-  ggtitle('Puntuación de los usuarios según 
-la película y el año de estreno') + 
-  geom_boxplot() + scale_color_manual(values=c("#003057", "#B52555", "#A0D1CA", "#7A99AC"))
-p + stat_summary(fun=mean, geom="point", shape=23, size=4) + theme(legend.position="bottom") 
-
-ggplot(top5, aes(x=top5$Score))+
-  geom_histogram(aes(y=..density..), position="identity", alpha=0.5) + 
-  geom_histogram(binwidth = 1, color="black", fill="deepskyblue4",
-                 linetype="dashed") +
-  labs(title="Histograma puntuaciones top 5 películas",x="Scores", y = "Densidad")+
-  theme_bw()
-```
-
-```{r eval=FALSE, include=FALSE}
-En el *boxplot* se representan las cinco películas por año de estreno. Como muestra el gráfico, las películas se estrenaron entre el 2000 y el 2003 (excluyendo el 2001, donde no se produjo ningún estreno). De estas, la mayoria tienen su mediana en la puntuación 4, seria el caso de las películas con ID 313, 6037 y 8387 respectivamente. Luego, el resto tienen como mediana la puntuación 3.
-
-El histograma nos sirve para reforzar la afirmación anterior, vemos que la frecuencia de puntuaciones 3 y 4 son las más abundantes.
-
-Como alternativa al *boxplot*, se puede utilizar el +violin plot*. En este caso vamos a representar la puntuación otorgada por los usuarios a cada película:
 ```
 
 
 ```{r, fig.align = 'center', fig.width = 5, fig.height = 3, echo = FALSE}
 ##solo me interesa la media
-sample
 interested = sample[,6]
 #remove(top5)
 top5 <- filter(scores, MovieID %in% sample$MovieID)
@@ -628,7 +551,7 @@ top5$MovieID <- as.character(top5$MovieID)
 top5 %<>% left_join(sample, by = 'MovieID')
 top5 <- top5[order(top5$Mean_Score, decreasing = TRUE),]
 top5$MovieID <- factor(top5$MovieID, levels=c("6037", "313", "8387", "9645", "10730"))
-plot2 = ggplot(data = top5, aes(x = MovieID, y = Score)) + 
+ggplot(data = top5, aes(x = MovieID, y = Score)) + 
   #geom_jitter(size = 1, color = 'gray', alpha = 0.5) + 
   geom_violin(aes(fill = Title.x), color = 'black', alpha = 0.8) +
   geom_boxplot(color = 'black', alpha = 0.7) + 
@@ -645,9 +568,6 @@ plot2 = ggplot(data = top5, aes(x = MovieID, y = Score)) +
     theme(plot.subtitle=element_text(size=8, hjust=1, face="italic", color="black"))
 ```
 
-```{r, fig.align = 'center', fig.width = 5, fig.height = 3}
-plot2
-```
 
 ## Estudios adicionales
 

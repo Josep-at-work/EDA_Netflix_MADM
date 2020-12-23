@@ -28,6 +28,9 @@ library(formatR)
 
 ```
 
+*test* *
+
+*shfdahsfdh
 ```{r Carga datos limpios "nuestra_pelis.csv", message=FALSE, warning=FALSE}
 scores = head(read_csv(here("Data","nuestras_pelis.csv")))
 scores %<>% mutate(across(c(MovieID,UserID,Score,Release_Year), as.integer))
