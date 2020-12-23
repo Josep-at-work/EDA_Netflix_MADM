@@ -2,71 +2,48 @@
 title: "Pregunta6"
 author: "Paul Ramírez"
 date: "22/12/2020"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
+
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE,
+	tidy = TRUE,
+	tidy.opts = list(width.cutoff=60)
+)
 
-```{r}
-library(scales)
+library(tidyverse)
+library(knitr)
+library(here)
+library(magrittr)
+library(lubridate)
+library(timeDate)
+library(formatR)
 
-ks <- function (x) { number_format(accuracy = 1,
-                                   scale = 1/1000,
-                                   suffix = "K",
-                                   big.mark = ",")(x) }
-```
-
-
-```{r, fig.align = 'center', fig.width = 5, fig.height = 3}
-coeff <- max(scores$Score) / max(month_scores$n)
-n_max_limit <- max(month_scores$n) + 10^4
-n_min_limit <- plyr::round_any((n_max_limit - min(month_scores$n))*2, 10^4)
-
-gg1 <- ggplot(data = month_scores, aes(x = Month))
-
-
-gg2 <- gg1 +
-  geom_bar(aes(y = n), fill = "darkcyan", stat = "identity") +
-  coord_cartesian(ylim = c(n_min_limit, n_max_limit)) +
-  geom_point(aes(y = Mean_Score/coeff)) +
-  geom_line(aes(y = Mean_Score/coeff), size = 1, group = 1) +
-  scale_y_continuous(
-    name = "Número de valoraciones",
-    labels = ks,
-    sec.axis = sec_axis(~.*coeff, name = "Promedio puntuación")
-  ) +
-  labs(title = "Valoraciones por mes", x = "") +
-  geom_text(aes(y = n, label = ks(n)), angle = 0, vjust = -0.5, size = 3) +
-  theme_minimal()
-
-gg2
 
 ```
 
-```{r, fig.align = 'center', fig.width = 5, fig.height = 3}
-coeff <- max(scores$Score) / max(day_week_scores$n)
-n_max_limit <- max(day_week_scores$n) + 10^4
-n_min_limit <- plyr::round_any(min(day_week_scores$n) - 10^4, 10^4, f = floor)
-
-gg1 <- ggplot(data = day_week_scores, aes(x = Day_Week))
-
-
-gg2 <- gg1 +
-  geom_bar(aes(y = n), fill = "darkcyan", stat = "identity") +
-  coord_cartesian(ylim = c(n_min_limit, n_max_limit)) +
-  geom_point(aes(y = Mean_Score/coeff)) +
-  geom_line(aes(y = Mean_Score/coeff), group = 1) +
-  scale_y_continuous(
-    name = "Número de valoraciones",
-    labels = ks,
-    sec.axis = sec_axis(~.*coeff, name = "Promedio puntuación")
-  ) +
-  labs(title = "Valoraciones por día de la semana", x = "") +
-  geom_text(aes(y = n, label = ks(n)), angle = 0, vjust = -0.5, size = 3) +
-  theme_minimal()
-
-
-gg2
+```{r Carga datos limpios "nuestra_pelis.csv", message=FALSE, warning=FALSE}
+scores = head(read_csv(here("Data","nuestras_pelis.csv")))
+scores %<>% mutate(across(c(MovieID,UserID,Score,Release_Year), as.integer))
 ```
+
+```{r, warning=FALSE, message=FALSE, options(width = 10)}
+#comentario asfjls adfjsldaf smafsjadf jskldajf sjalkgjsajgkljsalgj aslkgjk lsajgjsaljg sajglaslg ksaglk
+
+scores_dates <- scores %>% 
+  mutate(
+    Year = year(Date), 
+    n_month = month(Date),
+    Week = week(Date), 
+    Day = day(Date), 
+    n_day_week = wday(Date, week_start = getOption("lubridate.week.start", 1)),
+    Is_Weekend = if_else( isWeekend(Date) == TRUE, "Weekend", "Weekday" ) 
+  )
+```
+
