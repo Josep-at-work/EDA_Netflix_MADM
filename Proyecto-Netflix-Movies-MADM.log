@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.14159265-2.6-0.999992 (TeX Live 2020/W32TeX) (preloaded format=xelatex 2020.12.8)  23 DEC 2020 21:06
+This is XeTeX, Version 3.14159265-2.6-0.999992 (TeX Live 2020/W32TeX) (preloaded format=xelatex 2020.12.8)  23 DEC 2020 22:47
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1052,59 +1052,54 @@ LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
 ]
 LaTeX Font Info:    Font shape `TU/lmtt/bx/n' in size <10> not available
 (Font)              Font shape `TU/lmtt/b/n' tried instead on input line 166.
-[2]
+[2] [3]
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[3] [4]
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-[5]
+[4] [5]
 File: Proyecto-Netflix-Movies-MADM_files/figure-latex/unnamed-chunk-19-1.pdf Gr
 aphic file (type pdf)
 <use Proyecto-Netflix-Movies-MADM_files/figure-latex/unnamed-chunk-19-1.pdf>
-[6]
 File: Proyecto-Netflix-Movies-MADM_files/figure-latex/unnamed-chunk-21-1.pdf Gr
 aphic file (type pdf)
 <use Proyecto-Netflix-Movies-MADM_files/figure-latex/unnamed-chunk-21-1.pdf>
 File: Proyecto-Netflix-Movies-MADM_files/figure-latex/unnamed-chunk-25-1.pdf Gr
 aphic file (type pdf)
 <use Proyecto-Netflix-Movies-MADM_files/figure-latex/unnamed-chunk-25-1.pdf>
-[7] [8]
+[6]
 File: Proyecto-Netflix-Movies-MADM_files/figure-latex/unnamed-chunk-29-1.pdf Gr
 aphic file (type pdf)
 <use Proyecto-Netflix-Movies-MADM_files/figure-latex/unnamed-chunk-29-1.pdf>
+[7]
 File: Proyecto-Netflix-Movies-MADM_files/figure-latex/unnamed-chunk-30-1.pdf Gr
 aphic file (type pdf)
 <use Proyecto-Netflix-Movies-MADM_files/figure-latex/unnamed-chunk-30-1.pdf>
-[9]
 File: Proyecto-Netflix-Movies-MADM_files/figure-latex/unnamed-chunk-32-1.pdf Gr
 aphic file (type pdf)
 <use Proyecto-Netflix-Movies-MADM_files/figure-latex/unnamed-chunk-32-1.pdf>
+[8]
 File: Proyecto-Netflix-Movies-MADM_files/figure-latex/unnamed-chunk-34-1.pdf Gr
 aphic file (type pdf)
 <use Proyecto-Netflix-Movies-MADM_files/figure-latex/unnamed-chunk-34-1.pdf>
-[10]
 File: Proyecto-Netflix-Movies-MADM_files/figure-latex/unnamed-chunk-35-1.pdf Gr
 aphic file (type pdf)
 <use Proyecto-Netflix-Movies-MADM_files/figure-latex/unnamed-chunk-35-1.pdf>
-[11]
+[9]
 File: Proyecto-Netflix-Movies-MADM_files/figure-latex/unnamed-chunk-46-1.pdf Gr
 aphic file (type pdf)
 <use Proyecto-Netflix-Movies-MADM_files/figure-latex/unnamed-chunk-46-1.pdf>
-[12] (./Proyecto-Netflix-Movies-MADM.aux)
+[10] [11] (./Proyecto-Netflix-Movies-MADM.aux)
 Package rerunfilecheck Info: File `Proyecto-Netflix-Movies-MADM.out' has not ch
 anged.
 (rerunfilecheck)             Checksum: 0DBAD5D4D957F27FDE0B9C4A1DB77D7D;3530.
  ) 
 Here is how much of TeX's memory you used:
- 18273 strings out of 479291
- 323359 string characters out of 5875116
- 804329 words of memory out of 5000000
- 37470 multiletter control sequences out of 15000+600000
- 410003 words of font info for 83 fonts, out of 8000000 for 9000
+ 18267 strings out of 479291
+ 323227 string characters out of 5875116
+ 806326 words of memory out of 5000000
+ 37468 multiletter control sequences out of 15000+600000
+ 409987 words of font info for 81 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 94i,11n,118p,506b,393s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 94i,11n,118p,506b,397s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on Proyecto-Netflix-Movies-MADM.pdf (12 pages).
+Output written on Proyecto-Netflix-Movies-MADM.pdf (11 pages).

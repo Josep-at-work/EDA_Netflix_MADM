@@ -27,7 +27,7 @@ knitr::opts_chunk$set(
 	tidy.opts = list(width.cutoff=60)
 )
 
-#\fontsize{8}{8}
+#\fontsize{10}{10}
 
 library(tidyverse)
 library(knitr)
@@ -68,7 +68,7 @@ Este documento presenta los resultados del análisis exploratorio realizado sobr
 
 ### Importación datos puntuaciones películas
 
-Creamos una semilla especifica para seleccionar aleatoriamente 250 películas con las que desarrollar el análisis exploratorio.
+Creamos una semilla especifica para seleccionar aleatoriamente 250 películas.
 
 ```{r Selección 250 peliculas, eval=FALSE, message=TRUE, warning=TRUE, include=TRUE}
 filas_ID_combined_all = read.csv(here("Data","filas_ID_combined_all.txt"))
@@ -166,8 +166,8 @@ scores %<>% left_join(titles, by = 'MovieID')
 ```
 
 ### Exportación e importación de datos limpios para su análisis
-Datos puntuaciones películas
 ```{r Write csv datos limpios join, eval=FALSE, include=TRUE}
+#Datos puntuaciones películas
 write_csv(scores,here("Data", "nuestras_pelis.csv"))
 ```
 
@@ -176,7 +176,7 @@ scores = read_csv(here("Data","nuestras_pelis.csv"))
 scores %<>% mutate(across(c(MovieID,UserID,Score,Release_Year), as.integer), Date = as.Date(Date))
 ```
 
-Datos títulos películas
+
 ```{r eval=FALSE, include=FALSE}
 nuestros_movie_ids <- tibble(MovieID = unique(scores$MovieID))
 nuestros_titles <- titles %>%
@@ -187,6 +187,7 @@ titles  %<>% mutate(across(c(MovieID:Release_Year), as.integer)) %>%
 ```
 
 ```{r eval=FALSE, include=TRUE}
+#Datos títulos películas
 write_delim(titles, here("Data", "nuestros_titles.csv"), delim = "|")
 ```
 ```{r}
@@ -239,20 +240,14 @@ ks <- function (x) { number_format(accuracy = 1,
 ```{r}
 glimpse(scores)
 ```
-**Variables tipo _int_: MovieID, CustomerID, Score, Release_Year**
-
-- _UserID_ & _MovieID_ : Contiene un número entero, estos son objetos que contienen un único campo, un identificado ID para cada usuario (o película), no queremos duplicados. En cuanto al _MovieID_, será transformado en las gráficas a _chr_ para visualizarlo mejor.
-
-- _Release_Year_: No existen años con decimales, por lo tanto utilizar variables para datos enteros seria suficiente.
-
+**Variables tipo _int_: MovieID, CustomerID, Score, Release_Year**  
+- _UserID_ & _MovieID_ : Contiene un número entero, estos son objetos que contienen un único campo, un identificado ID para cada usuario (o película), no queremos duplicados. En cuanto al _MovieID_, será transformado en las gráficas a _chr_ para visualizarlo mejor.   
+- _Release_Year_: No existen años con decimales, por lo tanto utilizar variables para datos enteros seria suficiente.  
 - _Score_: Las puntuaciones son números enteros del 1 - 5.
 
-**Variables tipo _date_: Date**
-
-- _Date_ : esta variable incluye datos de tipo fecha (YY/MM/DD) por ello lo más adecuado es tratarlo como una variable de este tipo.
-
-**Variables tipo _chr_: Title**
-
+**Variables tipo _date_: Date**  
+- _Date_ : esta variable incluye datos de tipo fecha (YY/MM/DD) por ello lo más adecuado es tratarlo como una variable de este tipo.  
+**Variables tipo _chr_: Title**  
 - _Title_: Utilizamos el tipo carácter porque nos interesan objetos que representan un conjunto de letras.
 
 ## Estadísticos dataframe puntuaciones
@@ -331,7 +326,7 @@ n_max_limit <- max(month_scores$n) + 10^4
 n_min_limit <- plyr::round_any((n_max_limit - min(month_scores$n))*2, 10^4)
 ```
 
-```{r echo=TRUE, fig.align='center', fig.height=3, fig.width=5}
+```{r echo=TRUE, fig.align='center', fig.height=2, fig.width=5}
 ggplot(data = month_scores, aes(x = Month)) +
   geom_bar(aes(y = n), fill = "darkcyan", stat = "identity") +
   coord_cartesian(ylim = c(n_min_limit, n_max_limit)) +
@@ -358,7 +353,7 @@ n_min_limit <- plyr::round_any(min(day_week_scores$n) - 10^4, 10^4, f = floor)
 ```
 
 
-```{r echo=TRUE, fig.align='center', fig.height=3, fig.width=5}
+```{r echo=FALSE, fig.align='center', fig.height=2, fig.width=5}
 ggplot(data = day_week_scores, aes(x = Day_Week)) +
   geom_bar(aes(y = n), fill = "darkcyan", stat = "identity") +
   coord_cartesian(ylim = c(n_min_limit, n_max_limit)) +
@@ -396,7 +391,7 @@ En cuanto a las valoraciones por días de la semana observamos una diferencia mu
 
 
 ## Distribución películas estrenadas por año
-```{r}
+```{r, include=FALSE}
 movies_per_year <- titles %>%
   group_by(Release_Year) %>%
   summarise(n = n())
@@ -464,9 +459,7 @@ nb.cols <- 15
 mycolors <- colorRampPalette(brewer.pal(9, "YlOrRd"))(nb.cols)
 ```
 
-```{r, fig.align = 'center', fig.width = 6, fig.height = 4}
-#movies_onfire <- arrange(movies_onfire, desc(Ranking))
-#text para visualizar votos en el interactivo
+```{r, fig.align = 'center', fig.width = 4, fig.height = 3}
 ggplot(movies_onfire, aes(text = paste('Votos:', Votos), ID = MovieID, 
                           y = Ranking, x = Year )) +  
   geom_tile(aes(fill = secuencia)) +                  
@@ -484,9 +477,7 @@ orden_titulos <- arrange(top10_votada[,c('Title', 'Mean_Score')], desc(Mean_Scor
 movies_onfire %<>% transform(Title=factor(Title, levels=as.vector(orden_titulos$Title)))
 
 ggplot(movies_onfire, aes(Year, Mean, group=MovieID, colour=factor(MovieID))) +
-  geom_point() +
-  geom_line() +
-  facet_wrap(~Title, nrow = 2, scale='fixed') +
+  geom_point() + geom_line() + facet_wrap(~Title, nrow = 2, scale='fixed') +
   labs(y='Puntuación Media', x='Año', title='Puntuación Media por año, top 10') +
   theme(legend.position="none")
 ```
@@ -525,7 +516,7 @@ A continuación, representamos las 5 películas que recogen más valoraciones en
     geom_treemap_subgroup_border(colour="black",size=1)+
     geom_treemap_subgroup2_border(colour="black",size=1)+
     theme(plot.background = element_rect(fill = "#FFFEF2")) +
-    theme(plot.title=element_text(size=15, hjust=0.5, face="bold", color="black")) +
+    theme(plot.title=element_text(size=12, hjust=0.5, face="bold", color="black")) +
     theme(plot.subtitle=element_text(size=8, hjust=1, face="italic", color="black")))
 ```
 
@@ -538,7 +529,6 @@ top5$Release_Year <- as.factor(top5$Release_Year)
 top5$Score <- as.integer(top5$Score)
 
 ```
-
 
 ```{r, fig.align = 'center', fig.width = 5, fig.height = 3, echo = FALSE}
 top5 <- filter(scores, MovieID %in% sample$MovieID)
@@ -592,14 +582,13 @@ Como se observa en los gráficos anteriores, la mayoría de usuarios no se muest
 
 **Buscar los top 5 usuarios que más películas han puntuado. Luego, comparar con el top 1 usuario qué películas han dejado de evaluar el resto.**
 
-Primero vamos a buscar el número de total de películas que han sido evaluadas por usuario: 
+Primero vamos a buscar el número de total de películas que han sido evaluadas por usuario. En segundo lugar, seleccionaremos el *top 5 usuarios* que más películas han puntuado.
 
 ```{r echo=FALSE, fig.align='center', fig.height=3, fig.width=10}
 #número de veces que ha votado cada usuario
 num_votos_por_usuario = aggregate(scores$UserID, by = list(Usuario=scores$UserID), length)
 ```
 
-En segundo lugar, seleccionaremos el *top 5 usuarios* que más películas han puntuado,
 ```{r echo=FALSE, fig.align='center', fig.height=3, fig.width=10}
 
 df <- scores %>% group_by(UserID) %>% count()
@@ -616,7 +605,7 @@ knitr::kable(top_5_users, digits = 5, align = "c", caption = "Top 5 Usuarios") %
 
 ```
 
-En tercer lugar, buscaremos qué películas han sido evaluadas por estos usuarios. Seguidamente, compararemos el total de películas evaluadas por el usuario `top_1` con el resto:
+En tercer lugar, buscaremos qué películas han sido evaluadas por estos usuarios. Seguidamente, compararemos el total de películas evaluadas por el usuario `top_1` con el resto.
 ```{r, include= FALSE, fig.align = 'center', fig.width = 10, fig.height = 3}
 top_pelis_1 = scores %>% 
   filter(UserID %in% c('305344')) ##top_pelis_1
@@ -653,15 +642,13 @@ films_4 = Dif_1_4$Title#Películas que el `top_4` no ha evaluado pero el `top_1`
 films_5 = Dif_1_5$Title#Películas que el `top_5` no ha evaluado pero el `top_1` si lo ha hecho:
 ```
 
- 
  Aquí tenemos tres de las `18 películas` el `top_3` *no ha puntuado* pero el `top_1` si:
-```{r}
-knitr::kable(head(films_3,3), digits = 5, col.names = NULL, align = "l", caption = "3 de las películas que no ha votado el top_3") %>%
-  kable_styling(latex_options = "hold_position", font_size = 8) %>%
-  column_spec(1,width = "4cm")
 
-```
-
+```{r echo=FALSE}
+films_3 = as.tibble(films_3)
+kable(head(films_3,3), digits = 3, align = "c", col.names = NULL, caption = "Tres de las películas") %>%
+  kable_styling(latex_options = "hold_position", font_size = 8)
+``` 
 Este proceso debería realizarse con el resto de usuarios, sin embargo, por cuestión de espacio no vamos a ejecutar los códigos. Finalmente, obtendríamos que, la diferencia del top 2 con el top 1 son *3 películas*, mientras que el top 4 con el top 1 se diferencia en *26 películas* y, por último, la diferencia con el último usuario asciende a *41 películas*.
 
 ```{r eval=FALSE, include=FALSE}
@@ -713,7 +700,7 @@ plot3 <- plot3 +      theme(legend.position="top",
            panel.margin=unit(c(0.5,1,0,1), "cm"))  + theme(axis.text.x = element_text(angle = 50, hjust = 1))
 ```
 
-```{r, echo=FALSE, fig.align = 'center', fig.width = 10, fig.height = 6}
+```{r, echo=FALSE, fig.align = 'center', fig.width = 8, fig.height = 5}
 grid.arrange(plot1, plot3, ncol=2)
 ```
 
