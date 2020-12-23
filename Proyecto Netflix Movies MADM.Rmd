@@ -421,8 +421,7 @@ En nuestra muestra del `r round(100*250/17770,2)`% del total de las películas d
 votaciones_ano <- group_by(scores, MovieID, Year=year(Date)) %>%
   summarise(Votos = n_distinct((UserID)), Mean = round(mean(Score),3))  
 #las 10 más votadas
-top10_votada <- head(arrange(movie_scores[,c('MovieID','n','Mean_Score','Title')], 
-                             desc(n)), 10)  
+top10_votada <- head(arrange(movie_scores[,c('MovieID','n','Mean_Score','Title')], desc(n)), 10)  
 movies_onfire <- filter(votaciones_ano, MovieID %in% top10_votada$MovieID)
 
 movies_onfire$Ranking <- movies_onfire$MovieID    
@@ -441,7 +440,8 @@ kable_styling(latex_options = c("hold_position"),
 font_size = 8) %>%
 column_spec(1,width = "4cm")
 ```
-Para visualizar la distribución de votaciones por año que obtubieron las 10 peliculas más votadas de *Netflix*, creamos un *Heatmap*
+Para visualizar la distribución de votaciones por año que obtubieron las 10 peliculas más votadas de *Netflix*, creamos un *Heatmap*. 
+[Link a la versión interactiva del gráfico](./Heatmap_Interactivo.html))
 
 ```{r eval=TRUE, fig.align='center', fig.width=6, fig.height=4, include=FALSE}
 # 1r creamos una secuencia significativa de intervalos
